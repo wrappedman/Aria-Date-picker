@@ -113,11 +113,19 @@
   <header class="hero">
     <h1>Aria Date Picker — دیت‌پیکر شمسی و میلادی</h1>
     <p>یک فایل جاوااسکریپت، بدون هیچ وابستگی. تمام ظاهر برنامه داخل همان فایل قرار دارد و کلاس‌ها با پیشوند <code>adp-</code> نام‌گذاری شده‌اند تا با برنامه‌ی شما تداخل نکنند.</p>
+    <div class="demo-row" style="margin-top:16px; gap:10px">
+      <a class="ui primary" style="text-decoration:none; padding:9px 16px; background:var(--brand); color:#fff; border-radius:10px; font-size:13.5px"
+         href="download.html">📥 صفحهٔ دانلود فایل‌ها (ZIP)</a>
+      <a class="ui" style="text-decoration:none; padding:9px 16px; background:rgba(255,255,255,.16); color:#fff; border-color:rgba(255,255,255,.4); border-radius:10px; font-size:13.5px"
+         href="aria-datepicker-v1.2.0.zip" download>⬇ دانلود مستقیم ZIP</a>
+    </div>
     <div class="badges">
       <span>تک‌فایلی و بدون Dependency</span>
       <span>تقویم شمسی + میلادی</span>
       <span>حالت بازه (از — تا)</span>
       <span>محدودسازی بازه‌ی انتخابی</span>
+      <span>کبیسه‌ی دقیق و قابل تنظیم</span>
+      <span>آخر هفته‌ی دلخواه</span>
       <span>تعطیلات از JSON و اینترنت</span>
       <span>دسترسی‌پذیر با کیبورد</span>
     </div>
@@ -265,6 +273,113 @@
       <button class="ui" data-act="clear-range">پاک کردن</button>
     </div>
     <div class="out" id="out-range">هنوز بازه‌ای انتخاب نشده است.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳.۴</span> دقت سال‌های کبیسه و قاعده‌های قابل تنظیم</h2>
+    <p class="desc">
+      محاسبه‌ی کبیسه با <b>الگوریتم بورکفسکی</b> (مبنا: اعتدال بهاری) انجام می‌شود و صحت آن با
+      محاسبه‌ی مستقیم نجومی (روش میوس + قاعده‌ی رسمی «ظهر تهران») <b>برای ۱۱۷۸ تا ۲۱۰۰ تأیید شده است</b>
+      (متد <code>AriaDatePicker.compareLeapRules()</code> این مقایسه را انجام می‌دهد). اگر بخواهید،
+      می‌توانید قاعده را عوض کنید یا سال‌های کبیسه را <b>خودتان دقیق تعریف کنید</b>.
+    </p>
+<pre>// قاعده‌های آماده
+AriaDatePicker.setLeapRule('auto');          // پیش‌فرض: بورکفسکی (دقیق برای ۱۱۷۸ تا ۱۶۳۳)
+AriaDatePicker.setLeapRule('astronomical');  // محاسبه‌ی مستقیم اعتدال بهاری (بدون جدول)
+AriaDatePicker.setLeapRule('arithmetic');    // چرخه‌ی حسابی ۳۳ساله (کتابخانه‌های قدیمی)
+
+// تعریف دقیق توسط خودتان
+AriaDatePicker.setLeapRule([1403, 1408, 1412, 1417]);          // فهرست دستی
+AriaDatePicker.setLeapRule({ mode: 'auto', add: [1404] });      // اصلاح موردی
+AriaDatePicker.setLeapRule({ mode: 'auto', remove: [1403] });
+AriaDatePicker.setLeapRule(function (y) { return y % 4 === 0; });// قاعده‌ی دلخواه
+
+// بررسی و اطمینان از دقت
+AriaDatePicker.leapYears(1395, 1412);                  // [1395, 1399, 1403, 1408, 1412]
+AriaDatePicker.compareLeapRules('auto', 'astronomical', 1178, 2100);  // [] یعنی هیچ اختلافی نیست
+AriaDatePicker.astronomicalNowruz(2025);               // { gy: 2025, gm: 3, gd: 21 }
+AriaDatePicker.utils.jalaliYearLength(1403);           // 366
+
+// روی هر دیت‌پیکر
+dp.getLeapRule(); dp.setLeapRule('astronomical'); dp.getLeapYears(1400, 1420);
+dp.getYearLength(1403); dp.isLeapYear(1403);</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>قاعده‌ی کبیسه</label>
+        <select class="ui" id="leap-rule">
+          <option value="auto">پیش‌فرض — بورکفسکی (تأییدشده با نجوم)</option>
+          <option value="astronomical">محاسبه‌ی نجومی اعتدال بهاری</option>
+          <option value="arithmetic">چرخه‌ی حسابی ۳۳ساله</option>
+          <option value="custom">قاعده‌ی دلخواه (سال‌های بخش‌پذیر بر ۴)</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>تاریخ نمایشی</label>
+        <input id="demo-leap" class="ui" placeholder="کبیسه‌ها را ببینید">
+      </div>
+      <button class="ui" data-act="leap-list">فهرست کبیسه‌های ۱۳۹۰ تا ۱۴۲۰</button>
+      <button class="ui" data-act="leap-verify">تأیید دقت با محاسبه‌ی نجومی</button>
+    </div>
+    <div class="out" id="out-leap">کبیسه‌های ۱۳۹۰ تا ۱۴۲۰: ۱۳۹۱، ۱۳۹۵، ۱۳۹۹، ۱۴۰۳، ۱۴۰۸، ۱۴۱۲، ۱۴۱۶، ۱۴۲۰</div>
+    <div class="note">
+      نتیجه‌ی تست ما: <code>compareLeapRules('auto','astronomical',1178,1633)</code> و
+      <code>(...,1634,2100)</code> هر دو <b>هیچ اختلافی</b> نشان نمی‌دهند؛ یعنی کبیسه‌ها با قاعده‌ی رسمی تقویم
+      ایران (اعتدال بهاری پیش/پس از ظهر تهران) کاملاً منطبق‌اند.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳.۵</span> تعیین روز آخر هفته</h2>
+    <p class="desc">
+      به‌صورت پیش‌فرض آخر هفته‌ی تقویم شمسی <b>جمعه</b> و تقویم میلادی شنبه و یکشنبه است. با گزینه‌ی
+      <code>weekend</code> (یا متد <code>setWeekend()</code>) می‌توانید روز یا روزهای دلخواه را مشخص کنید؛
+      نام‌های فارسی، انگلیسی، کوتاه‌نوشت‌ها و شماره‌ی روز (0=یکشنبه … 6=شنبه) همه پذیرفته می‌شوند.
+      روزهای آخر هفته در تقویم با رنگ قرمز و علامت ستون‌های هفته نشان داده می‌شوند و با
+      <code>disableWeekends</code> غیرقابل انتخاب می‌شوند.
+    </p>
+<pre>AriaDatePicker.create('#demo-weekend', {
+  calendar: 'both',
+  weekend: ['پنجشنبه', 'جمعه'],              // برای هر دو تقویم
+  weekend: 'جمعه',                            // فقط جمعه
+  weekend: 6,                                 // ۰=یکشنبه … ۶=شنبه
+  weekend: { jalali: ['جمعه'], gregorian: ['شنبه', 'یکشنبه'] },  // تفکیکی
+  disableWeekends: false                      // آخر هفته غیرقابل انتخاب نشود
+});
+
+// تغییر در زمان اجرا
+dp.setWeekend(['پنجشنبه', 'جمعه']);
+dp.setWeekend(['شنبه', 'یکشنبه'], 'gregorian');   // فقط برای تقویم میلادی
+dp.getWeekend();        // { jalali: [4,5], gregorian: [4,5] }
+dp.getWeekendNames();   // ['پنجشنبه', 'جمعه']
+dp.isWeekend('1405/01/07');  // true</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ (آخر هفته را تغییر دهید)</label>
+        <input id="demo-weekend" class="ui">
+      </div>
+      <div class="field-group">
+        <label>روز آخر هفته</label>
+        <select class="ui" id="weekend-days">
+          <option value="5">جمعه (پیش‌فرض شمسی)</option>
+          <option value="4,5">پنجشنبه و جمعه</option>
+          <option value="6">شنبه</option>
+          <option value="0">یکشنبه</option>
+          <option value="0,6">شنبه و یکشنبه</option>
+          <option value="4">فقط پنجشنبه</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>آخر هفته قابل انتخاب باشد؟</label>
+        <select class="ui" id="weekend-disable">
+          <option value="no">بله (قابل انتخاب)</option>
+          <option value="yes">خیر (غیرفعال)</option>
+        </select>
+      </div>
+      <button class="ui" data-act="weekend-info">نمایش وضعیت آخر هفته</button>
+    </div>
+    <div class="out" id="out-weekend">آخر هفته‌ی فعلی: <b>جمعه</b> — روزهای آن با رنگ قرمز و ستون قرمز مشخص می‌شوند.</div>
   </section>
 
   <!-- ============================================================ -->
@@ -424,6 +539,18 @@ dp.clearHolidays();                     // پاک کردن کش</pre>
       handler: function (info) { alert('طول بازه: ' + info.range.lengthDays + ' روز'); } }
   ]
 });
+
+// کبیسه
+AriaDatePicker.setLeapRule('astronomical');       // یا فهرست/تابع دلخواه
+AriaDatePicker.leapYears(1390, 1420);             // [1391, 1395, 1399, 1403, 1408, ...]
+AriaDatePicker.compareLeapRules('auto','astronomical',1178,2100);   // [] = بدون اختلاف
+AriaDatePicker.astronomicalNowruz(2025);
+dp.setLeapRule('auto'); dp.getLeapRule(); dp.getLeapYears(1400,1420);
+dp.isLeapYear(1403); dp.getYearLength(1403);
+
+// آخر هفته
+dp.setWeekend(['پنجشنبه','جمعه']);  dp.setWeekend('شنبه','gregorian');
+dp.getWeekend(); dp.getWeekendNames(); dp.getWeekendNamesAll(); dp.isWeekend('1405/01/07');
 
 dp.setDayEvents({...});   dp.addDayEvent({...});   dp.removeDayEvent('dayEvent1');
 dp.getDayEvents();        dp.triggerDayEvents('1405/01/05');   dp.getLastDayEvent();</pre>
@@ -625,7 +752,9 @@ AriaDatePicker.create('#demo-form-field', {
         <tr><td><code>dayEvents</code> / <code>onDayEvent</code></td><td>شیء یا آرایه / تابع</td><td>رویداد شخصی روی روزها با ورودی‌های دلخواه (نگاه کنید به بخش ۳+)</td></tr>
         <tr><td><code>closeOnSelect</code> / <code>closeOnSelectRange</code></td><td>true | false</td><td>بسته‌شدن یا بازماندن پنجره پس از انتخاب تاریخ / پایان بازه</td></tr>
         <tr><td><code>onCalendarChange</code></td><td>تابع</td><td>تغییر تقویم با دکمه‌ی سوییچ</td></tr>
-        <tr><td><code>weekends</code></td><td>{ jalali: [5], gregorian: [0,6] }</td><td>روزهای تعطیل هفتگی (0=یکشنبه … 6=شنبه)</td></tr>
+        <tr><td><code>weekend</code></td><td>'جمعه' | 'friday' | 5 | ['پنجشنبه','جمعه'] | {jalali,gregorian}</td><td>تعیین روز(های) آخر هفته — نام فارسی/انگلیسی یا شماره‌ی روز</td></tr>
+        <tr><td><code>weekends</code></td><td>{ jalali: [5], gregorian: [0,6] }</td><td>همان تنظیم به تفکیک تقویم (0=یکشنبه … 6=شنبه)</td></tr>
+        <tr><td><code>leapRule</code></td><td>'auto' | 'astronomical' | 'arithmetic' | فهرست | تابع</td><td>قاعده‌ی سال‌های کبیسه (سراسری)</td></tr>
         <tr><td><code>holidayStyle</code></td><td>'red' | 'dot' | 'both' | 'none'</td><td>نحوه‌ی نمایش تعطیلات</td></tr>
         <tr><td><code>holidaySelectedStyle</code></td><td>'red' | 'accent'</td><td>رنگ روز تعطیلِ انتخاب‌شده (پیش‌فرض قرمز)</td></tr>
         <tr><td><code>syncViews</code></td><td>true | false</td><td>هماهنگی ماهِ پنل‌ها با تاریخ انتخاب‌شده و با ناوبری</td></tr>
@@ -667,6 +796,18 @@ dp.clear(); dp.goToday();               // پاک کردن / رفتن به ام�
 dp.setLimits({ mode: 'range', from: '1405/01/01', to: '1405/06/31' });
 dp.setCalendar('gregorian'); dp.setOptions({ theme: 'dark' });
 // رویدادهای شخصی روزها
+// کبیسه
+AriaDatePicker.setLeapRule('astronomical');       // یا فهرست/تابع دلخواه
+AriaDatePicker.leapYears(1390, 1420);             // [1391, 1395, 1399, 1403, 1408, ...]
+AriaDatePicker.compareLeapRules('auto','astronomical',1178,2100);   // [] = بدون اختلاف
+AriaDatePicker.astronomicalNowruz(2025);
+dp.setLeapRule('auto'); dp.getLeapRule(); dp.getLeapYears(1400,1420);
+dp.isLeapYear(1403); dp.getYearLength(1403);
+
+// آخر هفته
+dp.setWeekend(['پنجشنبه','جمعه']);  dp.setWeekend('شنبه','gregorian');
+dp.getWeekend(); dp.getWeekendNames(); dp.getWeekendNamesAll(); dp.isWeekend('1405/01/07');
+
 dp.setDayEvents({ days: ['1405/01/05'], handler: function (info, picker) {...} });
 dp.addDayEvent({ weekdays: [5], args: ['$date', 'sms'], handler: fn });   // ورودی‌های دلخواه
 dp.removeDayEvent('dayEvent1');  dp.getDayEvents();  dp.triggerDayEvents('1405/01/05');
@@ -723,7 +864,7 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
   </section>
 
   <footer>
-    Aria Date Picker — نسخه ۱.۱.۲ | مجوز GPL-3.0 | ساخته‌شده با جاوااسکریپت خالص و بدون وابستگی
+    Aria Date Picker — نسخه ۱.۲.۰ | مجوز GPL-3.0 | ساخته‌شده با جاوااسکریپت خالص و بدون وابستگی
   </footer>
 </div>
 
@@ -881,6 +1022,45 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
         (info.added ? ' (' + fa(info.added) + ' رکورد)' : ''));
     },
     onLog: function (msg) { if (window.console) console.log('[ADP]', msg); }
+  });
+
+  /* ---------- ۳.۴) کبیسه ---------- */
+  var leapPicker = ADP.create('#demo-leap', {
+    calendar: 'both',
+    initialDate: '1403/12/01',
+    defaultDate: '1403/12/30'
+  });
+  document.getElementById('leap-rule').addEventListener('change', function () {
+    var v = this.value;
+    if (v === 'custom') ADP.setLeapRule(function (y) { return y % 4 === 0; });
+    else ADP.setLeapRule(v);
+    leapPicker.render();
+    out('out-leap', 'قاعده‌ی فعلی: <b>' + esc(ADP.getLeapRule().label || ADP.getLeapRule().mode) + '</b>' +
+      ' — کبیسه‌های ۱۳۹۰ تا ۱۴۲۰: <b>' + fa(ADP.leapYears(1390, 1420).join('، ')) + '</b>' +
+      '<br>طول اسفند ۱۴۰۳: <b>' + fa(ADP.utils.jalaliMonthLength(1403, 12)) + ' روز</b>' +
+      '، اسفند ۱۴۰۴: <b>' + fa(ADP.utils.jalaliMonthLength(1404, 12)) + ' روز</b>');
+  });
+
+  /* ---------- ۳.۵) آخر هفته ---------- */
+  var weekendPicker = ADP.create('#demo-weekend', {
+    calendar: 'both',
+    weekend: 'جمعه',
+    initialDate: 'today',
+    onWeekendChange: function (wk, picker) {
+      out('out-weekend', 'آخر هفته‌ی جدید اعمال شد — شمسی: <b>' +
+        esc(picker.getWeekendNames('jalali').join('، ') || '—') + '</b> | میلادی: <b>' +
+        esc(picker.getWeekendNames('gregorian').join('، ') || '—') + '</b>');
+    }
+  });
+  document.getElementById('weekend-days').addEventListener('change', function () {
+    var days = this.value.split(',').map(Number);
+    weekendPicker.setWeekend(days);
+  });
+  document.getElementById('weekend-disable').addEventListener('change', function () {
+    weekendPicker.setOptions({ disableWeekends: this.value === 'yes' });
+    out('out-weekend', this.value === 'yes'
+      ? 'روزهای آخر هفته <b>غیرقابل انتخاب</b> شدند.'
+      : 'روزهای آخر هفته <b>قابل انتخاب</b> هستند.');
   });
 
   /* ---------- ۳+) رویدادهای شخصی روزها ---------- */
@@ -1079,6 +1259,24 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
       var s = jsonPicker.exportHolidays(true);
       jsonPicker.downloadHolidays('holidays-aria.json');
       out('out-json', 'فایل JSON ذخیره شد (' + fa((s.match(/\n/g) || []).length + 1) + ' خط). برای بازنشانی: <code>AriaDatePicker.get(document.querySelector("#demo-json"))</code>');
+    } else if (act === 'leap-list') {
+      var yrs = ADP.leapYears(1390, 1420);
+      out('out-leap', 'کبیسه‌های ۱۳۹۰ تا ۱۴۲۰ (' + fa(yrs.length) + ' سال): <b>' + fa(yrs.join('، ')) + '</b>' +
+        '<br>قاعده‌ی فعال: <b>' + esc(ADP.getLeapRule().label || ADP.getLeapRule().mode) + '</b>');
+    } else if (act === 'leap-verify') {
+      var d1 = ADP.compareLeapRules('auto', 'astronomical', 1178, 1633);
+      var d2 = ADP.compareLeapRules('auto', 'astronomical', 1634, 2100);
+      var n1 = ADP.astronomicalNowruz(2025);
+      out('out-leap', 'تأیید دقت کبیسه‌ها با محاسبه‌ی نجومی اعتدال بهاری:<br>' +
+        '• بازه‌ی ۱۱۷۸ تا ۱۶۳۳ → ' + (d1.length ? 'اختلاف در ' + fa(d1.length) + ' سال: ' + fa(d1.join('، ')) : '<b>هیچ اختلافی نیست ✓</b>') + '<br>' +
+        '• بازه‌ی ۱۶۳۴ تا ۲۱۰۰ → ' + (d2.length ? 'اختلاف در ' + fa(d2.length) + ' سال' : '<b>هیچ اختلافی نیست ✓</b>') + '<br>' +
+        '• نوروز ۲۰۲۵ (۱۴۰۴) بر اساس نجوم: <b>' + fa(n1.gy + '/' + n1.gm + '/' + n1.gd) + '</b>');
+    } else if (act === 'weekend-info') {
+      var wk = weekendPicker.getWeekend();
+      out('out-weekend', 'آخر هفته‌ی فعلی:<br>• شمسی: <b>' + esc(weekendPicker.getWeekendNames('jalali').join('، ') || '—') +
+        '</b> ([' + fa(wk.jalali.join('، ')) + '])<br>• میلادی: <b>' + esc(weekendPicker.getWeekendNames('gregorian').join('، ') || '—') +
+        '</b> ([' + fa(wk.gregorian.join('، ')) + '])<br>• آخر هفته غیرقابل انتخاب؟ <b>' +
+        (weekendPicker.options.disableWeekends ? 'بله' : 'خیر') + '</b>');
     } else if (act === 'evt-add') {
       var t = ADP.utils.todayIn('jalali');
       var days = [];

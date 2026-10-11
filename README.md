@@ -10,7 +10,7 @@
 </script>
 ```
 
-> نسخه: `1.1.2` — مجوز: GPL-3.0 — حجم: ~۱۵۵ کیلوبایت (غیرفشرده) / ~۸۴ کیلوبایت (min)
+> نسخه: `1.2.0` — مجوز: GPL-3.0 — حجم: ~۱۶۵ کیلوبایت (غیرفشرده) / ~۸۸ کیلوبایت (min)
 
 ---
 
@@ -23,6 +23,8 @@
 - [رویداد شخصی با انتخاب روز](#رویداد-شخصی-با-انتخاب-روز)
 - [بسته‌شدن یا بازماندن پنجره](#بستهشدن-یا-بازماندن-پنجره)
 - [سوییچ تقویم با یک دکمه](#سوییچ-تقویم-با-یک-دکمه)
+- [کبیسه‌ها: قاعده‌ی دقیق و قابل تنظیم](#کبیسهها-قاعدهی-دقیق-و-قابل-تنظیم)
+- [آخر هفته: تعیین روز(های) دلخواه](#آخر-هفته-تعیین-روزهای-دلخواه)
 - [مرجع گزینه‌ها](#مرجع-گزینهها)
 - [متدها و API](#متدها-و-api)
 - [رویدادها](#رویدادها)
@@ -52,6 +54,8 @@
 | کنترل بسته‌شدن | تعیین بسته‌شدن یا بازماندن پنجره پس از انتخاب (`closeOnSelect` / `closeOnSelectRange`) |
 | سوییچ تقویم | دکمه‌ی سوییچ برای نمایش هم‌زمان میلادی یا تعویض کامل تقویم (`switchToCalendar` / `switchMode`) |
 | تاریخ پیش‌فرض | تعیین نمای شروع (`initialDate`) و مقدار پیش‌فرض کادر (`defaultDate`) |
+| کبیسه‌ی دقیق و قابل تنظیم | قاعده‌ی کبیسه‌ی صریح و قابل تغییر: بورکفسکی (پیش‌فرض)، نجومی (اعتدال بهاری)، حسابی ۳۳ساله، فهرست دستی یا تابع دلخواه (`leapRule`) + ابزار سنجش دقت (`compareLeapRules`) |
+| آخر هفته‌ی قابل تنظیم | تعیین روز(های) آخر هفته با نام فارسی/انگلیسی یا شماره‌ی روز، تفکیکی برای هر تقویم (`weekend` / `setWeekend`) |
 | رنگ‌بندی تعطیلات | جمعه‌ها و تعطیلات رسمی قرمز — و حتی پس از انتخاب هم قرمز می‌مانند |
 | هماهنگی پنل‌ها | با انتخاب یک روز، پنل تقویم دیگر روی همان تاریخ می‌رود (`syncViews`) |
 | نگهبان روزهای غیرفعال | روزهای غیرفعال با ماوس، کیبورد و API هم انتخاب نمی‌شوند (`strictLimits`) |
@@ -378,6 +382,7 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | `holidayStyle` | `'red'` | `'red'`، `'dot'`، `'both'`، `'none'` |
 | `holidaySelectedStyle` | `'red'` | رنگ روز تعطیل/جمعه‌ی انتخاب‌شده: `'red'` (قرمز) یا `'accent'` (آبی) |
 | `syncViews` | `true` | هماهنگی ماهِ پنل‌ها با تاریخ انتخاب‌شده و با ناوبری (`false` = مستقل) |
+| `leapRule` | `'auto'` | قاعده‌ی سال‌های کبیسه: `'auto'`، `'borkowski'`، `'astronomical'`، `'arithmetic'`، فهرست سال‌ها، تابع دلخواه یا `{mode, add, remove}` |
 | `strictLimits` | `true` | تاریخ‌های غیرفعال حتی با `setDate`/`setRange` هم تنظیم نشوند |
 | `showTodayButton` / `showClearButton` / `showConfirmButton` / `showCloseButton` | خودکار | دکمه‌های پاصفحه |
 
@@ -387,7 +392,9 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | --- | --- | --- |
 | `holidays` | `null` | آبجکت JSON تعطیلات |
 | `holidayJson` | `null` | آدرس فایل JSON تعطیلات (منبع پیش‌فرض و آفلاین) |
-| `weekends` | `{jalali:[5], gregorian:[0,6]}` | روزهای تعطیل هفتگی |
+| `weekend` | `null` | روز(های) آخر هفته: `'جمعه'`، `'friday'`، `5`، `['پنجشنبه','جمعه']` یا `{jalali:[...], gregorian:[...]}` |
+| `weekends` | `{jalali:[5], gregorian:[0,6]}` | همان تنظیم به تفکیک تقویم (0=یکشنبه … 6=شنبه) |
+| `disableWeekends` | `false` | غیرقابل انتخاب شدن روزهای آخر هفته |
 | `countryCode` | `'IR'` | کد کشور برای سرویس‌های میلادی |
 | `holidayCache` / `holidayCacheKey` / `holidayTtl` | `true` / خودکار / ۷ روز | کش محلی (localStorage) |
 | `holidayProviders` | `null` | سرویس‌های سفارشی دریافت تعطیلات |
@@ -437,6 +444,8 @@ dp.getHolidays(1405, 'jalali');  dp.isHoliday();  dp.getHolidayTitle();
 dp.setDayEvents({...}); dp.addDayEvent({...}); dp.removeDayEvent('dayEvent1');
 dp.getDayEvents(); dp.triggerDayEvents('1405/01/05'); dp.getLastDayEvent();
 dp.switchCalendar('gregorian'); dp.showGregorian(); dp.hideGregorian(); dp.showBothCalendars();
+dp.setLeapRule('astronomical'); dp.getLeapRule(); dp.getLeapYears(1390, 1420); dp.isLeapYear(1403); dp.getYearLength(1403);
+dp.setWeekend(['پنجشنبه','جمعه']); dp.getWeekend(); dp.getWeekendNames(); dp.getWeekendNamesAll(); dp.isWeekend('1405/01/07');
 dp.setSwitchMode('swap'); dp.getPrimaryCalendar(); dp.setPrimaryCalendar('gregorian');
 dp.getAvailableCalendars(); dp.isCalendarActive('gregorian');
 dp.addHolidays({...}); dp.loadHolidays('holidays.json'); dp.syncHolidays(true);  // دریافت دستی
@@ -447,7 +456,7 @@ dp.destroy();
 توابع مستقل:
 
 ```js
-AriaDatePicker.version;                       // '1.1.2'
+AriaDatePicker.version;                       // '1.2.0'
 AriaDatePicker.instances;                     // همه‌ی نمونه‌های فعال
 AriaDatePicker.get(element);                  // یافتن نمونه از روی عنصر
 AriaDatePicker.autoInit(document, options);   // راه‌اندازی خودکار
@@ -490,6 +499,102 @@ document.querySelector('#el').addEventListener('adp:change', function (e) {
 });
 // همچنین: adp:open، adp:close و adp:dayevent (رویداد شخصی روز) و adp:calendarchange
 ```
+
+---
+
+## کبیسه‌ها: قاعده‌ی دقیق و قابل تنظیم
+
+> **سال‌های کبیسه با قاعده‌ای صریح و آزمون‌پذیر محاسبه می‌شوند.** قاعده‌ی پیش‌فرض `'auto'` در بازه‌ی
+> رسمی ۱۱۷۸ تا ۱۶۳۳ از الگوریتم بورکفسکی (مبنا: اعتدال بهاری) استفاده می‌کند و بیرون از آن بازه
+> به محاسبه‌ی نجومی سوئیچ می‌کند. صحت آن با دو مرجع بررسی شده است:
+>
+> | سنجه | نتیجه |
+> | --- | --- |
+> | مقایسه‌ی روزبه‌روز با تقویم فارسی ICU (`Intl`) برای ۱۹۰۰ تا ۲۱۰۰ میلادی | ۷۳٬۴۱۴ روز — **۰ اختلاف** |
+> | مقایسه‌ی کبیسه‌ها با محاسبه‌ی نجومی (میوس) و قاعده‌ی «ظهر تهران» | ۱۱۷۸ تا ۱۶۳۳ و ۱۶۳۴ تا ۲۱۰۰ — **۰ اختلاف** |
+> | مقایسه با چرخه‌ی حسابی ۳۳ساله | ۱۳۰۰ تا ۱۵۰۰ — **۰ اختلاف** |
+>
+> اگر با این حال بخواهید کبیسه‌ها را خودتان تعیین کنید، همه‌ی راه‌ها باز است:
+
+```js
+// ۱) قاعده‌های آماده
+AriaDatePicker.setLeapRule('auto');          // پیش‌فرض (بورکفسکی)
+AriaDatePicker.setLeapRule('borkowski');     // همیشه جدول بورکفسکی
+AriaDatePicker.setLeapRule('astronomical');  // محاسبه‌ی مستقیم اعتدال بهاری (میوس + ظهر تهران)
+AriaDatePicker.setLeapRule('arithmetic');    // چرخه‌ی حسابی ۳۳ساله
+
+// ۲) تعریف دقیق با فهرست سال‌ها
+AriaDatePicker.setLeapRule([1403, 1408, 1412, 1417]);
+
+// ۳) اصلاح موردی روی یک قاعده
+AriaDatePicker.setLeapRule({ mode: 'auto', add: [1404], remove: [1402] });
+
+// ۴) قاعده‌ی دلخواه
+AriaDatePicker.setLeapRule(function (y) { return y % 4 === 0; });
+
+// ۵) همچنین در تنظیمات دیت‌پیکر
+AriaDatePicker.create('#d', { leapRule: 'astronomical' });
+dp.setLeapRule('arithmetic'); dp.setOptions({ leapRule: [1403, 1408] });
+```
+
+ابزارهای سنجش و بررسی:
+
+```js
+AriaDatePicker.getLeapRule();            // { mode: 'auto', label: '...', add: [...], remove: [...] }
+AriaDatePicker.leapYears(1395, 1412);    // [1395, 1399, 1403, 1408, 1412]
+AriaDatePicker.utils.jalaliYearLength(1403);   // 366
+AriaDatePicker.utils.isLeapJalaliYear(1403);   // true
+AriaDatePicker.utils.jalaliMonthLength(1403, 12);  // 30
+
+// آیا دو قاعده در یک بازه اختلاف دارند؟ (خروجی: آرایه‌ی سال‌های متفاوت)
+AriaDatePicker.compareLeapRules('auto', 'astronomical', 1178, 1633);  // [] ← هیچ اختلافی نیست
+AriaDatePicker.compareLeapRules('auto', 'arithmetic', 1300, 1500);    // [] ← هیچ اختلافی نیست
+
+// نوروز بر اساس محاسبه‌ی نجومی خالص (برای بازه‌های دور از جدول)
+AriaDatePicker.astronomicalNowruz(2025);  // { jdn: 2460756, gy: 2025, gm: 3, gd: 21 }
+AriaDatePicker.astronomicalNowruz(2124);  // نوروزی که پس از ظهر تهران رخ می‌دهد
+```
+
+روی هر دیت‌پیکر هم: `dp.getLeapRule()`، `dp.setLeapRule()`، `dp.getLeapYears(from, to)`،
+`dp.getYearLength(jy)`، `dp.isLeapYear(jy)`.
+
+> نکته: قاعده‌ی کبیسه **سراسری** است (طول سال را تعیین می‌کند)، پس `AriaDatePicker.setLeapRule`
+> روی همه‌ی نمونه‌های فعال اثر می‌گذارد و پنل‌ها بی‌درنگ بازترسیم می‌شوند.
+
+---
+
+## آخر هفته: تعیین روز(های) دلخواه
+
+پیش‌فرض: **جمعه** برای تقویم شمسی و **شنبه/یکشنبه** برای تقویم میلادی. روزهای آخر هفته
+قرمز نمایش داده می‌شوند، ستون‌های هفته علامت می‌خورند و با `disableWeekends: true` قابل انتخاب نیستند.
+
+```js
+AriaDatePicker.create('#d', {
+  calendar: 'both',
+  weekend: 'جمعه',                                            // ساده‌ترین حالت
+  weekend: ['پنجشنبه', 'جمعه'],                               // چند روز
+  weekend: 5,                                                 // 0=یکشنبه … 6=شنبه
+  weekend: { jalali: ['جمعه'], gregorian: ['شنبه', 'یکشنبه'] }, // تفکیکی برای هر تقویم
+  disableWeekends: false                                      // قابل انتخاب بمانند
+});
+
+// در زمان اجرا
+dp.setWeekend(['پنجشنبه', 'جمعه']);
+dp.setWeekend('friday');
+dp.setWeekend(['شنبه', 'یکشنبه'], 'gregorian');   // فقط تقویم میلادی
+dp.setWeekend({ jalali: ['جمعه'], gregorian: [0, 6] });
+
+dp.getWeekend();          // { jalali: [5], gregorian: [0,6] }
+dp.getWeekend('jalali');  // [5]
+dp.getWeekendNames();     // ['جمعه']
+dp.getWeekendNamesAll();  // { jalali: ['جمعه'], gregorian: ['یکشنبه','شنبه'] }
+dp.isWeekend('1405/01/07');  // true
+```
+
+نام‌های پذیرفته‌شده (فارسی، انگلیسی، کوتاه‌نوشت و شماره‌ی روز؛ حساس به نیم‌فاصله نیست):
+`یکشنبه/شنبه/…/جمعه`، `sunday…saturday`، `sun…sat`، `0…6`.
+
+رویداد `onWeekendChange(weekends, picker)` هم پس از هر تغییر فراخوانی می‌شود.
 
 ---
 
@@ -558,7 +663,13 @@ AriaDatePicker.addProvider('jalali', {
 
 ---
 
-## رفتارهای مهم (نسخه‌ی ۱.۱.۲)
+## رفتارهای مهم (نسخه‌ی ۱.۲.۰)
+
+- **کبیسه‌ها صریح و قابل تنظیم‌اند**: `leapRule: 'auto'` (پیش‌فرض) در بازه‌ی ۱۱۷۸–۱۶۳۳ از جدول بورکفسکی و
+  بیرون از آن از محاسبه‌ی نجومی استفاده می‌کند؛ با `setLeapRule([سال‌ها])`، `{mode, add, remove}` یا یک تابع
+  می‌توانید عیناً سال‌های کبیسه را خودتان تعیین کنید. برای سنجش دقت: `compareLeapRules(a, b, from, to)`.
+- **آخر هفته قابل تنظیم است**: `weekend: 'جمعه'`، `weekend: ['پنجشنبه','جمعه']` یا به تفکیک تقویم
+  `{jalali:[5], gregorian:[0,6]}`؛ با `disableWeekends: true` غیرقابل انتخاب می‌شوند.
 
 ### رنگ روز تعطیل انتخاب‌شده
 روزهای تعطیل (و جمعه‌ها) حتی پس از انتخاب هم **قرمز** می‌مانند و رنگ آبی انتخاب روی آن‌ها اعمال نمی‌شود.
@@ -677,7 +788,7 @@ src/07-api.js         API عمومی، autoInit، تابع‌های کمکی و 
 
 ```bash
 npm run build     # ساخت aria-datepicker.js و dist/aria-datepicker.min.js
-npm test          # ۱۹۶ تست موتور تقویم، انتخاب، محدودیت‌ها، تعطیلات، رویدادها و سوییچ تقویم + ۴۰ تست صفحه‌ی دمو (jsdom)
+npm test          # ۲۶۰ تست موتور تقویم، انتخاب، محدودیت‌ها، تعطیلات، رویدادها، سوییچ تقویم، کبیسه و آخر هفته + ۴۸ تست صفحه‌ی دمو (jsdom)
 ```
 
 > خروجی نهایی همان `aria-datepicker.js` است؛ می‌توانید فایل ساخته‌شده را مستقیم در پروژه‌ی خود استفاده کنید.

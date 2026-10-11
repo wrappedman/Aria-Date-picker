@@ -1,4 +1,4 @@
-/*! Aria Date Picker v1.1.2 | تقویم شمسی و میلادی | GPL-3.0 | 2026-10-11 */
+/*! Aria Date Picker v1.2.0 | تقویم شمسی و میلادی | GPL-3.0 | 2026-10-11 */
 /* ===== 01-core.js ===== */
 /*!
  * ============================================================================
@@ -7,7 +7,7 @@
  *  یک دیت‌پیکر کامل و تک‌فایلی برای تقویم شمسی (جلالی) و میلادی (گرگوری)
  *  A single-file, dependency-free Jalali (Persian) & Gregorian date picker.
  *
- *  @version   1.1.2
+ *  @version   1.2.0
  *  @author    Aria
  *  @license   GPL-3.0
  *  @file      aria-datepicker.js   (این فایل به تنهایی و بدون هیچ وابستگی کار می‌کند)
@@ -40,7 +40,7 @@
   : (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.1.2';
+  var VERSION = '1.2.0';
   var STYLE_ID = 'aria-datepicker-styles-v1';
   var DEFAULT_PREFIX = 'adp-';
 
@@ -169,9 +169,14 @@
     return { leap: leap, gy: gy, march: march };
   }
 
+  /** کبیسه بودن بر پایه‌ی الگوریتم بورکفسکی (بدون احتساب قاعده‌ی فعال) */
+  function isLeapJalaliYearBorkowski(jy) {
+    return jalCalSafe(jy, false).leap === 0;
+  }
+
+  /** کبیسه بودن بر اساس قاعده‌ی فعال (auto / astronomical / arithmetic / table / custom) */
   function isLeapJalaliYear(jy) {
-    var r = jalCal(jy, false);
-    return r.leap === 0;
+    return isLeapJalaliYearRule(jy);
   }
 
   /** تبدیل تاریخ میلادی به شماره‌ی روز جولیَن */
@@ -194,9 +199,22 @@
     return { gy: gy, gm: gm, gd: gd };
   }
 
+  /** jalCal ایمن: خارج از بازه‌ی جدولی از محاسبه‌ی نجومی استفاده می‌کند (بدون خطا) */
+  function jalCalSafe(jy, withoutLeap) {
+    try {
+      return jalCal(jy, withoutLeap);
+    } catch (e) {
+      var n1 = nowruzJdnAstro(jy + 621);
+      var g = d2g(n1);
+      var march = g.gm === 3 ? g.gd : (g.gm === 4 ? 32 + g.gd : 20);
+      var leap = (nowruzJdnAstro(jy + 622) - n1) === 366 ? 0 : 1;
+      return { leap: leap, gy: jy + 621, march: march };
+    }
+  }
+
   /** تبدیل تاریخ جلالی به شماره‌ی روز جولیَن */
   function j2d(jy, jm, jd) {
-    var r = jalCal(jy, true);
+    var r = jalCalSafe(jy, true);
     return g2d(r.gy, 3, r.march) + (jm - 1) * 31 - idiv(jm, 7) * (jm - 7) + jd - 1;
   }
 
@@ -204,7 +222,7 @@
   function d2j(jdn) {
     var gy = d2g(jdn).gy;
     var jy = gy - 621;
-    var r = jalCal(jy, false);
+    var r = jalCalSafe(jy, false);
     var jdn1f = g2d(gy, 3, r.march);
     var jd, jm, k;
     k = jdn - jdn1f;
@@ -291,10 +309,10 @@
       monthsShort: NAMES.fa.jalaliMonths,
       dateFormat: 'YYYY/MM/DD',
       altFormat: 'YYYY-MM-DD',
-      jdn: function (y, m, d) { return j2d(y, m, d); },
-      fromJdn: function (jdn) { var o = d2j(jdn); return { y: o.jy, m: o.jm, d: o.jd }; },
-      monthLength: jalaaliMonthLength,
-      isLeap: isLeapJalaliYear,
+      jdn: function (y, m, d) { return j2dRule(y, m, d); },
+      fromJdn: function (jdn) { var o = d2jRule(jdn); return { y: o.jy, m: o.jm, d: o.jd }; },
+      monthLength: function (y, m) { return monthLengthRule(y, m); },
+      isLeap: function (y) { return isLeapJalaliYearRule(y); },
       minYear: 1178,
       maxYear: 2500
     },
@@ -324,6 +342,48 @@
     var jdn = g2d(n.getFullYear(), n.getMonth() + 1, n.getDate());
     var o = CALENDARS[calKey].fromJdn(jdn);
     return { y: o.y, m: o.m, d: o.d, jdn: jdn };
+  }
+
+  /** نام‌های روز هفته برای تنظیم آخر هفته (فارسی، انگلیسی و کوتاه‌نوشت‌ها) */
+  var WEEKDAY_NAMES = {
+    0: ['یکشنبه', 'يكشنبه', 'یک‌شنبه', 'sun', 'sunday', 'su', 'y'],
+    1: ['دوشنبه', 'دوشنبه', 'mon', 'monday', 'mo', 'd'],
+    2: ['سه‌شنبه', 'سه شنبه', 'سه\u200cشنبه', 'tue', 'tuesday', 'tu', 's'],
+    3: ['چهارشنبه', 'چهار‌شنبه', 'wed', 'wednesday', 'we', 'ch', 'c'],
+    4: ['پنجشنبه', 'پنج‌شنبه', 'پنج شنبه', 'thu', 'thursday', 'th', 'p'],
+    5: ['جمعه', 'fri', 'friday', 'fr', 'j'],
+    6: ['شنبه', 'sat', 'saturday', 'sa', 'sh']
+  };
+
+  /** تبدیل نام/عدد روز هفته به ایندکس (0=یکشنبه ... 6=شنبه)؛ در صورت نامعتبر بودن null */
+  function weekdayIndex(value) {
+    if (value == null || value === '') return null;
+    if (isNum(value)) return (value >= 0 && value <= 6) ? Math.round(value) : null;
+    var v = toEnDigits(trim(String(value))).toLowerCase();
+    if (/^[0-6]$/.test(v)) return +v;
+    var normalized = v.replace(/[\u200c\s_-]+/g, '');
+    for (var idx in WEEKDAY_NAMES) {
+      if (!has(WEEKDAY_NAMES, idx)) continue;
+      var names = WEEKDAY_NAMES[idx];
+      for (var i = 0; i < names.length; i++) {
+        var n = names[i].replace(/[\u200c\s_-]+/g, '');
+        if (normalized === n) return +idx;
+      }
+    }
+    return null;
+  }
+
+  /** نرمال‌سازی فهرست روزهای آخر هفته: ورودی هر شکلی → آرایه‌ی ایندکس‌ها */
+  function normalizeWeekendDays(value) {
+    if (value == null) return null;
+    var list = isArr(value) ? value : [value];
+    var out = [];
+    list.forEach(function (item) {
+      if (isArr(item)) { item.forEach(function (x) { var i = weekdayIndex(x); if (i != null && out.indexOf(i) === -1) out.push(i); }); return; }
+      var idx = weekdayIndex(item);
+      if (idx != null && out.indexOf(idx) === -1) out.push(idx);
+    });
+    return out.length ? out.sort(function (a, b) { return a - b; }) : null;
   }
 
   /** شماره‌ی روز هفته (0=یکشنبه ... 6=شنبه) از روی JDN */
@@ -468,6 +528,331 @@
     if (y > 1700) return 'gregorian';
     if (y >= 1100 && y <= 1700) return 'jalali';
     return null;
+  }
+
+  /* ==========================================================================
+   *  1-5) موتور دقیق کبیسه  /  Precise leap-year engine
+   *  ------------------------------------------------------------------------
+   *  قاعده‌های پشتیبانی‌شده (گزینه‌ی leapRule):
+   *    'auto'         : الگوریتم بورکفسکی در بازه‌ی رسمی ۱۱۷۸ تا ۱۶۳۳ و
+   *                     محاسبه‌ی نجومی خارج از آن بازه (پیش‌فرض)
+   *    'borkowski'    : فقط الگوریتم جدولی/ریاضی بورکفسکی
+   *    'astronomical' : محاسبه‌ی مستقیم لحظه‌ی اعتدال بهاری (روش میوس) و
+   *                     قاعده‌ی رسمی ایران: اگر اعتدال پیش از ظهر به وقت
+   *                     تهران (UTC+3:30) باشد، همان روز، وگرنه روز بعد
+   *    'arithmetic'   : چرخه‌ی حسابی ۳۳ساله (سازگار با کتابخانه‌های قدیمی)
+   *    'table'        : فهرست دستی سال‌های کبیسه‌ی کاربر (کنترل کامل و دقیق)
+   *    تابع دلخواه    : (year) => boolean
+   * ========================================================================== */
+
+  /* --- جدول جملات تناوبی اعتدال بهاری (Meeus, Astronomical Algorithms, ch. 27) --- */
+  var EQUINOX_TERMS = [
+    [485, 324.96, 1934.136], [203, 337.23, 32964.467], [199, 342.08, 20.186],
+    [182, 27.85, 445267.112], [156, 73.14, 45036.886], [136, 171.52, 22518.443],
+    [77, 222.54, 65928.934], [74, 296.72, 3034.906], [70, 243.58, 9037.513],
+    [58, 119.81, 33718.147], [52, 297.17, 150.678], [50, 21.02, 2281.226],
+    [45, 247.54, 29929.562], [44, 325.15, 31555.956], [29, 60.93, 4443.417],
+    [18, 155.12, 67555.328], [17, 288.79, 4562.452], [16, 198.04, 62894.029],
+    [14, 199.76, 31436.921], [12, 95.39, 14577.848], [12, 287.11, 31931.756],
+    [12, 320.81, 34777.259], [9, 227.73, 1222.114], [8, 15.45, 16859.074]
+  ];
+
+  var D2R = Math.PI / 180;
+
+  /** اختلاف زمانی TT-UT بر حسب ثانیه (اسپناک و میوس) */
+  function deltaTSeconds(year) {
+    var t, u;
+    if (year < 948) {
+      u = (year - 2000) / 100;
+      return 2177 + 497 * u + 44.1 * u * u;
+    }
+    if (year < 1600) {
+      u = (year - 1000) / 100;
+      return 1574.2 - 556.01 * u + 71.23472 * u * u + 0.319781 * u * u * u -
+        0.8503463 * u * u * u * u - 0.005050998 * Math.pow(u, 5) + 0.0083572073 * Math.pow(u, 6);
+    }
+    if (year < 1700) {
+      t = year - 1600;
+      return 120 - 0.9808 * t - 0.01532 * t * t + t * t * t / 7129;
+    }
+    if (year < 1800) {
+      t = year - 1700;
+      return 8.83 + 0.1603 * t - 0.0059285 * t * t + 0.00013336 * t * t * t - t * t * t * t / 1174000;
+    }
+    if (year < 1860) {
+      t = year - 1800;
+      return 13.72 - 0.332447 * t + 0.0068612 * t * t + 0.0041116 * t * t * t -
+        0.00037436 * Math.pow(t, 4) + 0.0000121272 * Math.pow(t, 5) -
+        0.0000001699 * Math.pow(t, 6) + 0.000000000875 * Math.pow(t, 7);
+    }
+    if (year < 1900) {
+      t = year - 1860;
+      return 7.62 + 0.5737 * t - 0.251754 * t * t + 0.01680668 * t * t * t -
+        0.0004473624 * Math.pow(t, 4) + Math.pow(t, 5) / 233174;
+    }
+    if (year < 1920) {
+      t = year - 1900;
+      return -2.79 + 1.494119 * t - 0.0598939 * t * t + 0.0061966 * t * t * t - 0.000197 * Math.pow(t, 4);
+    }
+    if (year < 1941) {
+      t = year - 1920;
+      return 21.20 + 0.84493 * t - 0.076100 * t * t + 0.0020936 * t * t * t;
+    }
+    if (year < 1961) {
+      t = year - 1950;
+      return 29.07 + 0.407 * t - t * t / 233 + t * t * t / 2547;
+    }
+    if (year < 1986) {
+      t = year - 1975;
+      return 45.45 + 1.067 * t - t * t / 260 - t * t * t / 718;
+    }
+    if (year < 2005) {
+      t = year - 2000;
+      return 63.86 + 0.3345 * t - 0.060374 * t * t + 0.0017275 * t * t * t +
+        0.000651814 * Math.pow(t, 4) + 0.00002373599 * Math.pow(t, 5);
+    }
+    if (year < 2050) {
+      t = year - 2000;
+      return 62.92 + 0.32217 * t + 0.005589 * t * t;
+    }
+    if (year < 2150) {
+      u = (year - 1820) / 100;
+      return -20 + 32 * u * u - 0.5628 * (2150 - year);
+    }
+    u = (year - 1820) / 100;
+    return -20 + 32 * u * u;
+  }
+
+  /** لحظه‌ی اعتدال بهاری (روز جولیَن، مبنا TT و نیم‌روز) */
+  function marchEquinoxJde(year) {
+    var Y = (year - 2000) / 1000;
+    var jde0 = 2451623.80984 + 365242.37404 * Y + 0.05169 * Y * Y - 0.00411 * Y * Y * Y - 0.00057 * Math.pow(Y, 4);
+    var T = (jde0 - 2451545.0) / 36525;
+    var W = (35999.373 * T - 2.47) * D2R;
+    var dl = 1 + 0.0334 * Math.cos(W) + 0.0007 * Math.cos(2 * W);
+    var S = 0;
+    for (var i = 0; i < EQUINOX_TERMS.length; i++) {
+      var term = EQUINOX_TERMS[i];
+      S += term[0] * Math.cos((term[1] + term[2] * T) * D2R);
+    }
+    return jde0 + (0.00001 * S) / dl;
+  }
+
+  /**
+   * روز جولیَن نوروز بر اساس قاعده‌ی رسمی ایران:
+   * اگر لحظه‌ی اعتدال پیش از ظهر به وقت ایران (UTC+3:30) باشد همان روز، وگرنه روز بعد.
+   */
+  var _nowruzCache = {};
+  function nowruzJdnAstro(gy) {
+    if (_nowruzCache[gy] !== undefined) return _nowruzCache[gy];
+    var jde = marchEquinoxJde(gy);
+    var local = jde - deltaTSeconds(gy) / 86400 + 3.5 / 24;   // به وقت رسمی ایران
+    var dayNumber = Math.floor(local + 0.5);                  // روز جولیَنِ شامل لحظه
+    var fraction = (local + 0.5) - dayNumber;                 // کسری از نیمه‌شب
+    var hour = fraction * 24;
+    var jdn = hour < 12 ? dayNumber : dayNumber + 1;          // قاعده‌ی ظهر
+    _nowruzCache[gy] = jdn;
+    return jdn;
+  }
+
+  /* --- قاعده‌ی حسابی ۳۳ساله --- */
+  var ARITH_EPOCH_JDN = 1948320;      // ۱ فروردین سال ۱
+  function arithNowruzJdn(jy) {
+    return ARITH_EPOCH_JDN + 365 * (jy - 1) + Math.floor((8 * jy + 21) / 33);
+  }
+  function arithIsLeap(jy) { return ((25 * jy + 11) % 33) < 8; }
+
+  /* --- وضعیت قاعده‌ی فعال --- */
+  var _leapRule = { mode: 'auto', list: null, add: null, remove: null, fn: null, label: 'auto' };
+  var _yearStartCache = {};
+
+  function normalizeLeapRule(rule) {
+    var out = { mode: 'auto', list: null, add: null, remove: null, fn: null, label: 'auto' };
+    if (rule == null) return out;
+    if (typeof rule === 'function') {
+      out.mode = 'custom'; out.fn = rule; out.label = 'custom';
+      return out;
+    }
+    if (isArr(rule)) {
+      out.mode = 'table';
+      out.list = rule.map(Number).filter(function (y) { return !isNaN(y); });
+      out.label = 'table';
+      return out;
+    }
+    if (typeof rule === 'string') {
+      var key = rule.toLowerCase();
+      if (key === 'astronomical' || key === 'najoomi' || key === 'equinox') { out.mode = 'astronomical'; out.label = 'astronomical'; }
+      else if (key === 'arithmetic' || key === 'hesabi' || key === '33') { out.mode = 'arithmetic'; out.label = 'arithmetic'; }
+      else if (key === 'borkowski') { out.mode = 'borkowski'; out.label = 'borkowski'; }
+      else { out.mode = 'auto'; out.label = 'auto'; }
+      return out;
+    }
+    if (isPlainObj(rule)) {
+      var mode = rule.mode || (rule.leapYears ? 'table' : 'auto');
+      out.mode = ['auto', 'borkowski', 'astronomical', 'arithmetic', 'table', 'custom'].indexOf(mode) !== -1 ? mode : 'auto';
+      out.label = mode + (rule.add || rule.remove ? '+overrides' : '');
+      if (rule.leapYears) out.list = normalizeList(rule.leapYears).map(Number);
+      if (rule.list) out.list = normalizeList(rule.list).map(Number);
+      if (rule.add) out.add = normalizeList(rule.add).map(Number);
+      if (rule.remove) out.remove = normalizeList(rule.remove).map(Number);
+      if (isFn(rule.fn)) { out.mode = 'custom'; out.fn = rule.fn; }
+      return out;
+    }
+    return out;
+  }
+
+  /** تنظیم قاعده‌ی کبیسه (سراسری) */
+  function setLeapRule(rule) {
+    _leapRule = normalizeLeapRule(rule);
+    _yearStartCache = {};
+    _nowruzCache = {};
+    return _leapRule.label;
+  }
+  function getLeapRule() {
+    return {
+      mode: _leapRule.mode, label: _leapRule.label, leapYears: _leapRule.list,
+      add: _leapRule.add, remove: _leapRule.remove, hasCustomFn: !!_leapRule.fn
+    };
+  }
+
+  /** آیا این سال کبیسه است؟ (بر اساس قاعده‌ی فعال، بدون هیچ خطایی) */
+  function isLeapJalaliYearRule(jy) {
+    jy = Math.round(jy);
+    var base;
+    switch (_leapRule.mode) {
+      case 'astronomical':
+        base = (yearStartAstro(jy + 1) - yearStartAstro(jy)) === 366;
+        break;
+      case 'arithmetic':
+        base = arithIsLeap(jy);
+        break;
+      case 'table':
+        base = !!(_leapRule.list && _leapRule.list.indexOf(jy) !== -1);
+        break;
+      case 'custom':
+        try { base = !!_leapRule.fn(jy); } catch (e) { base = borkowskiIsLeap(jy); }
+        break;
+      case 'borkowski':
+        base = borkowskiIsLeap(jy);
+        break;
+      default: // auto
+        base = (jy >= 1178 && jy <= 1633) ? borkowskiIsLeap(jy) : ((yearStartAstro(jy + 1) - yearStartAstro(jy)) === 366);
+    }
+    if (_leapRule.add && _leapRule.add.indexOf(jy) !== -1) base = true;
+    if (_leapRule.remove && _leapRule.remove.indexOf(jy) !== -1) base = false;
+    return base;
+  }
+
+  function borkowskiIsLeap(jy) { return isLeapJalaliYearBorkowski(jy); }
+
+  /* --- شروع سال جلالی بر پایه‌ی هر قاعده (JDN) --- */
+  function yearStartBorkowski(jy) {
+    var r = jalCalSafe(jy, true);
+    return g2d(r.gy, 3, r.march);
+  }
+  function yearStartAstro(jy) {
+    var gy = jy + 621;
+    // انتخاب نوروزی که واقعاً به این سال جلالی تعلق دارد (تحمل اختلاف یک‌روزه‌ی مرزها)
+    var candidates = [nowruzJdnAstro(gy - 1), nowruzJdnAstro(gy), nowruzJdnAstro(gy + 1)];
+    for (var i = 0; i < candidates.length; i++) {
+      if (d2j(candidates[i]).jy === jy) return candidates[i];
+    }
+    return nowruzJdnAstro(gy);
+  }
+  function yearStartArithmetic(jy) { return arithNowruzJdn(jy); }
+
+  /** شروع سال با قاعده‌ی فعال (با جدول دستی، انحراف تجمعی هم لحاظ می‌شود) */
+  function yearStartFor(jy, rule) {
+    rule = rule || _leapRule;
+    var key = rule.label + ':' + jy;
+    if (_yearStartCache[key] !== undefined) return _yearStartCache[key];
+    var base;
+    switch (rule.mode) {
+      case 'astronomical': base = yearStartAstro(jy); break;
+      case 'arithmetic': base = yearStartArithmetic(jy); break;
+      case 'table':
+      case 'custom':
+        if (rule.mode === 'custom' && rule.fn) {
+          // با تابع دلخواه: از مبدأ بورکفسکی + مجموع انحراف کبیسه‌ها
+          base = yearStartBorkowski(jy) + leapShift(jy, rule);
+        } else {
+          base = yearStartBorkowski(jy) + leapShift(jy, rule);
+        }
+        break;
+      case 'borkowski': base = yearStartBorkowski(jy); break;
+      default:
+        base = (jy >= 1178 && jy <= 1633) ? yearStartBorkowski(jy) : yearStartAstro(jy);
+        if (rule.add || rule.remove) base += leapShift(jy, rule);
+    }
+    _yearStartCache[key] = base;
+    return base;
+  }
+
+  /** مجموع انحراف تعداد کبیسه‌ها نسبت به مبنا (برای قواعد دستی/دلخواه) */
+  function leapShift(jy, rule) {
+    if (!rule) return 0;
+    var diff = 0, y;
+    var lo = 1178, hi = Math.max(jy, 1179);
+    // برای بازه‌های بزرگ، محاسبه‌ی تجمعی مستقیم هزینه‌بر است؛ از اختلاف قاعده‌ها استفاده می‌کنیم
+    if (rule.mode === 'table' || rule.mode === 'custom') {
+      for (y = Math.min(lo, jy); y < jy; y++) {
+        var declared = rule.mode === 'table'
+          ? !!(rule.list && rule.list.indexOf(y) !== -1)
+          : (rule.fn ? !!rule.fn(y) : borkowskiIsLeap(y));
+        var actual = (y >= 1178 && y <= 1633) ? borkowskiIsLeap(y) : ((yearStartAstro(y + 1) - yearStartAstro(y)) === 366);
+        if (declared !== actual) diff += declared ? 1 : -1;
+      }
+    }
+    if (rule.add) rule.add.forEach(function (y2) { if (y2 < jy) diff += 1; });
+    if (rule.remove) rule.remove.forEach(function (y2) { if (y2 < jy) diff -= 1; });
+    return diff;
+  }
+
+  /* --- تبدیل‌های عمومی مبتنی بر قاعده --- */
+  function j2dRule(jy, jm, jd) {
+    return yearStartFor(jy) + (jm - 1) * 31 - idiv(jm, 7) * (jm - 7) + jd - 1;
+  }
+  function d2jRule(jdn) {
+    var jy = d2j(jdn).jy;                       // تخمین اولیه
+    while (yearStartFor(jy + 1) <= jdn) jy += 1;
+    while (yearStartFor(jy) > jdn) jy -= 1;
+    var doy = jdn - yearStartFor(jy);
+    var jm = doy < 186 ? 1 + idiv(doy, 31) : 7 + idiv(doy - 186, 30);
+    var jd = doy - ((jm - 1) * 31 - idiv(jm, 7) * (jm - 7)) + 1;
+    return { jy: jy, jm: jm, jd: jd };
+  }
+  function monthLengthRule(jy, jm) {
+    var start = yearStartFor(jy) + (jm - 1) * 31 - idiv(jm, 7) * (jm - 7);
+    var nextStart = jm === 12 ? yearStartFor(jy + 1) : yearStartFor(jy) + (jm) * 31 - idiv(jm + 1, 7) * (jm + 1 - 7);
+    return nextStart - start;
+  }
+
+  /** فهرست سال‌های کبیسه در یک بازه */
+  function jalaliLeapYears(from, to) {
+    var out = [];
+    var a = Math.min(from, to), b = Math.max(from, to);
+    for (var y = a; y <= b; y++) if (isLeapJalaliYearRule(y)) out.push(y);
+    return out;
+  }
+
+  /** طول سال جلالی بر اساس قاعده‌ی فعال */
+  function jalaliYearLength(jy) { return isLeapJalaliYearRule(jy) ? 366 : 365; }
+
+  /** مقایسه‌ی دو قاعده و برگرداندن سال‌های متفاوت (برای اطمینان از دقت) */
+  function compareLeapRules(ruleA, ruleB, from, to) {
+    var save = _leapRule;
+    var out = [];
+    var a = Math.min(from, to), b = Math.max(from, to);
+    setLeapRule(ruleA);
+    var listA = {};
+    for (var y = a; y <= b; y++) listA[y] = isLeapJalaliYearRule(y);
+    setLeapRule(ruleB);
+    for (var y2 = a; y2 <= b; y2++) {
+      if (isLeapJalaliYearRule(y2) !== listA[y2]) out.push(y2);
+    }
+    _leapRule = save;
+    _yearStartCache = {};
+    return out;
   }
 
 /* ===== 02-holidays.js ===== */
@@ -1457,6 +1842,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     gregorianDir: null,            // جهت پنل میلادی: 'ltr' | 'rtl' (پیش‌فرض: بر اساس زبان)
     weekStart: null,               // ایندکس شروع هفته بر اساس getDay()؛ پیش‌فرض هر تقویم
     persianDigits: 'auto',         // 'auto' | true | false | { jalali: true, gregorian: false }
+    leapRule: null,                // قاعده‌ی کبیسه (سراسری): 'auto' | 'astronomical' | 'arithmetic' | فهرست | تابع
     dualDigits: false,             // نمایش عدد روزِ معادل در تقویم دیگر زیر عدد اصلی (true) یا همان عدد با ارقام دیگر ('same')
 
     /* --- مقدار و نمایش --- */
@@ -1517,7 +1903,8 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     /* --- تعطیلات --- */
     holidays: null,                // آبجکت JSON تعطیلات
     holidayJson: null,             // آدرس فایل JSON تعطیلات
-    weekends: null,                // {jalali:[5], gregorian:[0,6]}
+    weekend: null,                 // روز(های) آخر هفته: 'جمعه' | 5 | ['پنجشنبه','جمعه'] | {jalali:[5], gregorian:[0,6]}
+    weekends: null,                // مترادف پیشرفته: {jalali:[5], gregorian:[0,6]}
     countryCode: 'IR',             // فقط برای فراخوانی دستی fetchHolidays()
     holidayCache: true,
     holidayCacheKey: null,
@@ -1552,6 +1939,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     onChange: null,
     onDayEvent: null,              // فراخوانی سراسری پس از هر رویداد شخصی روز
     onCalendarChange: null,        // تغییر تقویم با دکمه‌ی سوییچ
+    onWeekendChange: null,         // تغییر روزهای آخر هفته
     onOpen: null,
     onClose: null,
     onSelect: null,
@@ -1575,7 +1963,15 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       o.editable = !options.readOnly;
     }
     if (o.showConfirmButton === null) o.showConfirmButton = !!o.range || !!o.confirmMode;
-    if (!o.weekends) o.weekends = { jalali: [5], gregorian: [0, 6] };
+    // آخر هفته: پیش‌فرض جمعه برای شمسی و شنبه/یکشنبه برای میلادی
+    var defaultWeekends = { jalali: [5], gregorian: [0, 6] };
+    var wk = o.weekends || {};
+    var wend = normalizeWeekendDays(o.weekend);
+    o.weekends = {
+      jalali: normalizeWeekendDays(wk.jalali) || (wend ? wend.slice() : defaultWeekends.jalali.slice()),
+      gregorian: normalizeWeekendDays(wk.gregorian) || (wend ? wend.slice() : defaultWeekends.gregorian.slice())
+    };
+    o.weekendInput = o.weekend;
     if (o.size !== 'sm' && o.size !== 'lg') o.size = 'md';
     if (o.theme !== 'dark' && o.theme !== 'auto') o.theme = 'light';
     if (o.holidaySelectedStyle !== 'accent') o.holidaySelectedStyle = 'red';
@@ -1657,6 +2053,10 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     if (!(this instanceof Picker)) return new Picker(target, options);
 
     this.options = resolveOptions(options);
+    // قاعده‌ی کبیسه: سراسری است (چون طول سال را تعیین می‌کند)
+    if (this.options.leapRule != null) {
+      this._appliedLeapRule = setLeapRule(this.options.leapRule);
+    }
     this.prefix = this.options.prefix;
     this.uid = 'adp' + (++_uidSeq) + Math.floor(Math.random() * 1e4);
     injectStyles(this.prefix);
@@ -3857,7 +4257,30 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     },
 
     /** دسترسی به شیء مدیر تعطیلات (برای کارهای پیشرفته) */
-    getHolidayManager: function () { return this.holiday; }
+    getHolidayManager: function () { return this.holiday; },
+
+    /* ---------------------------------------------------------------- */
+    /*  کبیسه                                                            */
+    /* ---------------------------------------------------------------- */
+
+    /** قاعده‌ی کبیسه‌ی فعال (سراسری) */
+    getLeapRule: function () { return getLeapRule(); },
+
+    /** تغییر قاعده‌ی کبیسه (سراسری برای همه‌ی نمونه‌ها) */
+    setLeapRule: function (rule) {
+      setLeapRule(rule);
+      this.render();
+      return this;
+    },
+
+    /** فهرست سال‌های کبیسه در یک بازه */
+    getLeapYears: function (from, to) { return jalaliLeapYears(from, to); },
+
+    /** طول سال جلالی (۳۶۵ یا ۳۶۶) */
+    getYearLength: function (jy) { return jalaliYearLength(jy); },
+
+    /** آیا سال جلالی کبیسه است؟ */
+    isLeapYear: function (jy) { return isLeapJalaliYearRule(jy); },
   });
 
   /* ==========================================================================
@@ -4096,6 +4519,86 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 
     /** اطلاعات آخرین رویداد اجراشده */
     getLastDayEvent: function () { return this.state.lastDayEvent; },
+
+    /* =====================================================================
+     *  6-2-2) روز(های) آخر هفته  /  Weekend configuration
+     * =================================================================== */
+
+    /**
+     * تعیین روزهای آخر هفته
+     *   dp.setWeekend('جمعه')                        → فقط جمعه (هر دو تقویم)
+     *   dp.setWeekend(['پنجشنبه', 'جمعه'])           → پنجشنبه و جمعه
+     *   dp.setWeekend('friday', 'gregorian')         → فقط برای تقویم میلادی
+     *   dp.setWeekend({ jalali: [5], gregorian: [0, 6] })
+     * روزهای مجاز: 0=یکشنبه، 1=دوشنبه، 2=سه‌شنبه، 3=چهارشنبه، 4=پنجشنبه، 5=جمعه، 6=شنبه
+     */
+    setWeekend: function (days, calendar) {
+      if (isPlainObj(days) && !isArr(days)) {
+        if (days.jalali !== undefined) this.options.weekends.jalali = normalizeWeekendDays(days.jalali) || [];
+        if (days.gregorian !== undefined) this.options.weekends.gregorian = normalizeWeekendDays(days.gregorian) || [];
+      } else {
+        var normalized = normalizeWeekendDays(days);
+        if (normalized) {
+          if (calendar && CALENDARS[calendar]) this.options.weekends[calendar] = normalized;
+          else {
+            this.options.weekends.jalali = normalized.slice();
+            this.options.weekends.gregorian = normalized.slice();
+          }
+        }
+      }
+      if (this.holiday) {
+        this.holiday.options.weekends = this.options.weekends;
+        this.holiday.options.cacheKey = this.options.holidayCacheKey || (CACHE_KEY_DEFAULT + '-' + this.prefix);
+      }
+      this.render();
+      if (isFn(this.options.onWeekendChange)) this.options.onWeekendChange(this.getWeekend(), this);
+      return this;
+    },
+
+    /** روزهای آخر هفته‌ی فعلی */
+    getWeekend: function (calendar) {
+      if (calendar && CALENDARS[calendar]) return (this.options.weekends[calendar] || []).slice();
+      return {
+        jalali: (this.options.weekends.jalali || []).slice(),
+        gregorian: (this.options.weekends.gregorian || []).slice()
+      };
+    },
+
+    /** آیا این روز (یا تاریخ داده‌شده) آخر هفته است؟ */
+    isWeekend: function (input, calendar) {
+      var cal = CALENDARS[calendar] ? calendar : this.primary;
+      var jdn;
+      if (input == null) {
+        if (!this.state.from) return false;
+        jdn = this.state.from.jdn;
+        cal = this.state.from.calendar;
+      } else if (isNum(input) && input >= 0 && input <= 6) {
+        jdn = null;
+        return (this.options.weekends[cal] || []).indexOf(input) !== -1;
+      } else {
+        var d = this.toDateObj(input, cal);
+        if (!d) return false;
+        jdn = d.jdn;
+        cal = d.calendar;
+      }
+      return this.holiday.isWeekend(cal, weekdayFromJdn(jdn));
+    },
+
+    /** نام روزهای آخر هفته به فارسی/انگلیسی */
+    getWeekendNames: function (calendar) {
+      var cal = CALENDARS[calendar] ? calendar : this.primary;
+      var list = this.getWeekend(cal);
+      var names = NAMES[this.panelLang(cal)] || NAMES.fa;
+      return (isArr(list) ? list : []).map(function (i) { return names.weekdays[i]; });
+    },
+
+    /** نام روزهای آخر هفته برای هر دو تقویم */
+    getWeekendNamesAll: function () {
+      var self = this;
+      var out = {};
+      this.calendars.forEach(function (cal) { out[cal] = self.getWeekendNames(cal); });
+      return out;
+    },
 
     /* =====================================================================
      *  6-3) سوییچ تقویم  /  Calendar switching
@@ -4362,16 +4865,54 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     calendars: CALENDARS,
     languages: NAMES,
     holidayProviders: DEFAULT_PROVIDERS,
+    /* ---- قاعده‌ی کبیسه ---- */
+    /**
+     * تعیین قاعده‌ی کبیسه (سراسری برای همه‌ی دیت‌پیکرها)
+     *   'auto' (پیش‌فرض) | 'borkowski' | 'astronomical' | 'arithmetic'
+     *   [1403, 1408, ...]                      فهرست دقیق سال‌های کبیسه
+     *   { mode:'auto', add:[1404], remove:[] } اصلاح موردی
+     *   function (year) { return true/false; } قاعده‌ی دلخواه
+     */
+    setLeapRule: function (rule) {
+      var label = setLeapRule(rule);
+      Picker.instances.slice().forEach(function (pk) {
+        pk._yearStartCacheDirty = true;
+        pk.render();
+      });
+      return label;
+    },
+    /** قاعده‌ی کبیسه‌ی فعلی */
+    getLeapRule: getLeapRule,
+    /** فهرست سال‌های کبیسه در یک بازه */
+    leapYears: function (from, to) { return jalaliLeapYears(from, to); },
+    /** مقایسه‌ی دو قاعده و سال‌های متفاوت (برای اطمینان از دقت) */
+    compareLeapRules: compareLeapRules,
+    /** تاریخ نوروز یک سال میلادی بر اساس محاسبه‌ی نجومی */
+    astronomicalNowruz: function (gregorianYear) {
+      var jdn = nowruzJdnAstro(gregorianYear);
+      var g = d2g(jdn);
+      return { jdn: jdn, gy: g.gy, gm: g.gm, gd: g.gd };
+    },
+
     utils: {
       toFaDigits: toFaDigits,
+      jalaliLeapYears: jalaliLeapYears,
+      jalaliYearLength: jalaliYearLength,
+      isLeapJalaliYearBorkowski: isLeapJalaliYearBorkowski,
+      weekdayIndex: weekdayIndex,
+      normalizeWeekendDays: normalizeWeekendDays,
+      weekendNames: WEEKDAY_NAMES,
+      marchEquinoxJde: marchEquinoxJde,
+      nowruzJdnAstronomical: nowruzJdnAstro,
+      compareLeapRules: compareLeapRules,
       toEnDigits: toEnDigits,
       jdnFromGregorian: g2d,
       gregorianFromJdn: d2g,
       jdnFromJalali: j2d,
       jalaliFromJdn: d2j,
-      isLeapJalaliYear: isLeapJalaliYear,
+      isLeapJalaliYear: function (y) { return isLeapJalaliYearRule(y); },
       isLeapGregorian: isLeapGregorian,
-      jalaliMonthLength: jalaaliMonthLength,
+      jalaliMonthLength: function (y, m) { return CALENDARS.jalali.monthLength(y, m); },
       gregorianMonthLength: gregorianMonthLength,
       weekdayFromJdn: weekdayFromJdn,
       todayIn: todayIn,
