@@ -1,4 +1,4 @@
-/*! Aria Date Picker v1.1.0 | تقویم شمسی و میلادی | GPL-3.0 | 2026-10-11 */
+/*! Aria Date Picker v1.1.2 | تقویم شمسی و میلادی | GPL-3.0 | 2026-10-11 */
 /* ===== 01-core.js ===== */
 /*!
  * ============================================================================
@@ -7,7 +7,7 @@
  *  یک دیت‌پیکر کامل و تک‌فایلی برای تقویم شمسی (جلالی) و میلادی (گرگوری)
  *  A single-file, dependency-free Jalali (Persian) & Gregorian date picker.
  *
- *  @version   1.1.0
+ *  @version   1.1.2
  *  @author    Aria
  *  @license   GPL-3.0
  *  @file      aria-datepicker.js   (این فایل به تنهایی و بدون هیچ وابستگی کار می‌کند)
@@ -40,7 +40,7 @@
   : (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.1.0';
+  var VERSION = '1.1.2';
   var STYLE_ID = 'aria-datepicker-styles-v1';
   var DEFAULT_PREFIX = 'adp-';
 
@@ -1098,7 +1098,14 @@
 .{{P}}wrap *, .{{P}}popup *, .{{P}}inline *, .{{P}}field *, .{{P}}modal-bg * { box-sizing: border-box; }
 
 /* ---------- تم تاریک ---------- */
-.{{P}}theme-dark, .{{P}}theme-dark .{{P}}popup {
+.{{P}}theme-dark,
+.{{P}}popup.{{P}}theme-dark,
+.{{P}}inline.{{P}}theme-dark,
+.{{P}}wrap.{{P}}theme-dark,
+.{{P}}modal-bg.{{P}}theme-dark,
+.{{P}}theme-dark .{{P}}popup,
+.{{P}}theme-dark .{{P}}inline,
+.{{P}}theme-dark .{{P}}field {
   --{{P}}bg: #1b2130;
   --{{P}}bg-alt: #222a3b;
   --{{P}}fg: #e7ecf6;
@@ -1112,6 +1119,50 @@
   --{{P}}holiday-soft: rgba(255, 107, 111, .16);
   --{{P}}today: #38c98b;
   --{{P}}shadow: 0 16px 48px rgba(0, 0, 0, .5);
+  background-color: #1b2130;
+  color: #e7ecf6;
+}
+.{{P}}popup.{{P}}theme-dark, .{{P}}inline.{{P}}theme-dark, .{{P}}theme-dark .{{P}}popup, .{{P}}theme-dark .{{P}}inline {
+  background: #1b2130;
+  border-color: #2c3549;
+}
+.{{P}}theme-dark .{{P}}day, .{{P}}theme-dark .{{P}}wd, .{{P}}theme-dark .{{P}}cell, .{{P}}theme-dark .{{P}}cal-label,
+.{{P}}theme-dark .{{P}}btn, .{{P}}theme-dark .{{P}}switch, .{{P}}theme-dark .{{P}}list-item { color: #e7ecf6; }
+.{{P}}theme-dark .{{P}}cell, .{{P}}theme-dark .{{P}}switch, .{{P}}theme-dark .{{P}}nav { background-color: #222a3b; }
+.{{P}}theme-dark .{{P}}nav { background-color: transparent; }
+.{{P}}theme-dark select, .{{P}}theme-dark .{{P}}time select { background: #222a3b; color: #e7ecf6; border-color: #2c3549; }
+.{{P}}theme-dark .{{P}}day.{{P}}out { opacity: .45; }
+.{{P}}theme-dark .{{P}}day.{{P}}in-range { background: var(--{{P}}accent-soft); }
+.{{P}}theme-dark .{{P}}day:hover:not(:disabled) { background: var(--{{P}}accent-hover); }
+.{{P}}theme-dark .{{P}}modal-bg { background: rgba(0, 0, 0, .62); }
+
+/* --- تم خودکار بر اساس تنظیمات سیستم --- */
+@media (prefers-color-scheme: dark) {
+  .{{P}}theme-auto,
+  .{{P}}popup.{{P}}theme-auto,
+  .{{P}}inline.{{P}}theme-auto,
+  .{{P}}wrap.{{P}}theme-auto,
+  .{{P}}theme-auto .{{P}}popup,
+  .{{P}}theme-auto .{{P}}inline,
+  .{{P}}theme-auto .{{P}}field {
+    --{{P}}bg: #1b2130;
+    --{{P}}bg-alt: #222a3b;
+    --{{P}}fg: #e7ecf6;
+    --{{P}}muted: #97a3ba;
+    --{{P}}border: #2c3549;
+    --{{P}}accent: #4f86ff;
+    --{{P}}accent-soft: rgba(79, 134, 255, .22);
+    --{{P}}accent-hover: rgba(79, 134, 255, .14);
+    --{{P}}holiday: #ff6b6f;
+    --{{P}}holiday-soft: rgba(255, 107, 111, .16);
+    --{{P}}today: #38c98b;
+    color: #e7ecf6;
+  }
+  .{{P}}popup.{{P}}theme-auto, .{{P}}inline.{{P}}theme-auto, .{{P}}theme-auto .{{P}}popup, .{{P}}theme-auto .{{P}}inline {
+    background: #1b2130;
+    border-color: #2c3549;
+  }
+  .{{P}}theme-auto .{{P}}cell, .{{P}}theme-auto .{{P}}switch { background-color: #222a3b; }
 }
 
 /* ---------- فیلد ورودی (input کاربر) ---------- */
@@ -1216,9 +1267,16 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 .{{P}}cal-label {
   border: 0; background: transparent; color: inherit; cursor: pointer;
   font: inherit; font-size: 14px; font-weight: 700; padding: 5px 8px; border-radius: var(--{{P}}radius-sm);
+  display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap;
 }
 .{{P}}cal-label:hover { background: var(--{{P}}accent-hover); color: var(--{{P}}accent); }
-.{{P}}cal-key { font-size: 11px; font-weight: 500; color: var(--{{P}}muted); }
+.{{P}}cal-key {
+  font-size: 11px; font-weight: 500; color: var(--{{P}}muted);
+  margin-inline-start: 7px;          /* فاصله‌ی کوچک از تاریخ و سال */
+  padding-inline-start: 6px;
+  border-inline-start: 1px solid var(--{{P}}border);   /* جداکننده‌ی نازک و ملایم */
+  line-height: 1.5;
+}
 
 /* ---------- شبکه ---------- */
 .{{P}}wd-row, .{{P}}days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -1239,10 +1297,21 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 .{{P}}day.{{P}}today { box-shadow: inset 0 0 0 1.6px var(--{{P}}today); font-weight: 700; }
 .{{P}}day.{{P}}in-range { background: var(--{{P}}accent-soft); border-radius: 0; }
 .{{P}}day.{{P}}range-start, .{{P}}day.{{P}}range-end { background: var(--{{P}}accent); color: var(--{{P}}accent-fg); border-radius: var(--{{P}}radius-sm); }
+/* روز تعطیل/جمعه‌ای که انتخاب می‌شود، به‌جای آبی، قرمز می‌شود */
+.{{P}}day.{{P}}sel-holiday,
+.{{P}}day.{{P}}sel-holiday.{{P}}range-start,
+.{{P}}day.{{P}}sel-holiday.{{P}}range-end,
+.{{P}}day.{{P}}sel-holiday.{{P}}selected { background: var(--{{P}}holiday); color: #ffffff; }
+.{{P}}day.{{P}}sel-holiday.{{P}}in-range { background: var(--{{P}}holiday-soft); }
+.{{P}}day.{{P}}sel-holiday .{{P}}day-sub, .{{P}}day.{{P}}sel-holiday .{{P}}day-num { color: inherit; }
+.{{P}}day.{{P}}sel-holiday .{{P}}dot, .{{P}}day.{{P}}sel-holiday .{{P}}event-dot { background: #ffffff; }
 .{{P}}day.{{P}}range-start.{{P}}rtl-edge { border-start-end-radius: 3px; border-end-end-radius: 3px; }
 .{{P}}day.{{P}}selected { background: var(--{{P}}accent); color: var(--{{P}}accent-fg); font-weight: 700; }
 .{{P}}day.{{P}}selected.{{P}}off, .{{P}}day.{{P}}selected .{{P}}dot { color: var(--{{P}}accent-fg); }
-.{{P}}day:disabled { color: var(--{{P}}muted); opacity: .45; cursor: not-allowed; background: transparent; }
+.{{P}}day:disabled, .{{P}}day[aria-disabled="true"] { color: var(--{{P}}muted); opacity: .45; cursor: not-allowed; background: transparent; }
+/* جلوگیری قطعی از کلیک (حتی روی span داخل دکمه‌ی غیرفعال) */
+.{{P}}day:disabled, .{{P}}day[aria-disabled="true"] { pointer-events: none; }
+.{{P}}day:disabled:hover, .{{P}}day[aria-disabled="true"]:hover { background: transparent; }
 .{{P}}day:focus-visible { outline: 2px solid var(--{{P}}accent); outline-offset: 1px; }
 .{{P}}day-num { line-height: 1.1; }
 .{{P}}day-sub { font-size: 9px; color: var(--{{P}}muted); line-height: 1; margin-top: 2px; }
@@ -1388,7 +1457,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     gregorianDir: null,            // جهت پنل میلادی: 'ltr' | 'rtl' (پیش‌فرض: بر اساس زبان)
     weekStart: null,               // ایندکس شروع هفته بر اساس getDay()؛ پیش‌فرض هر تقویم
     persianDigits: 'auto',         // 'auto' | true | false | { jalali: true, gregorian: false }
-    dualDigits: false,             // نمایش عدد به هر دو شکل (۱۲ و 12)
+    dualDigits: false,             // نمایش عدد روزِ معادل در تقویم دیگر زیر عدد اصلی (true) یا همان عدد با ارقام دیگر ('same')
 
     /* --- مقدار و نمایش --- */
     format: null,                  // 'YYYY/MM/DD' یا {jalali:'...', gregorian:'...'}
@@ -1402,7 +1471,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     initialView: 'days',           // 'days' | 'months' | 'years'
     placeholder: null,             // متن جای‌خالی
     dir: null,                     // 'rtl' | 'ltr' (پیش‌فرض: خودکار)
-    theme: 'light',                // 'light' | 'dark'
+    theme: 'light',                // 'light' | 'dark' | 'auto' (بر اساس تنظیمات سیستم)
     size: 'md',                    // 'sm' | 'md' | 'lg'
     accent: null,                  // رنگ اصلی، مثلاً '#7c3aed'
     zIndex: null,
@@ -1416,6 +1485,8 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     closeOnSelectRange: null,      // بستن پنل پس از انتخاب تاریخ دوم (پیش‌فرض: مقدار closeOnSelect)
     showCloseButton: false,
     monthsPerPanel: 1,             // تعداد ماه نمایش‌داده‌شده در هر پنل (1 یا 2)
+    syncViews: true,               // هماهنگی ماه پنل‌ها با تاریخ انتخاب‌شده و با ناوبری
+    strictLimits: true,            // تاریخ‌های غیرفعال حتی با API هم انتخاب/تنظیم نشوند
     calendarSwitch: null,          // نمایش دکمه‌ی سوییچ تقویم: null (خودکار) | true | false
     switchToCalendar: null,        // تقویم دیگری که با دکمه در دسترس قرار می‌گیرد (مثلاً 'gregorian')
     switchMode: 'both',            // 'both' = نمایش هم‌زمان در کنار هم، 'swap' = تعویض کامل تقویم
@@ -1429,6 +1500,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     showClearButton: true,
     highlightWeekends: true,       // رنگ قرمز برای جمعه‌ها و تعطیلات
     holidayStyle: 'red',           // 'red' | 'dot' | 'both' | 'none'
+    holidaySelectedStyle: 'red',   // 'red' = روز تعطیل انتخاب‌شده قرمز شود | 'accent' = آبی بماند
 
     /* --- محدودیت‌ها --- */
     limits: null,                  // {mode:'free'|'range'|'before'|'after', from, to, min, max, minDays, maxDays}
@@ -1505,7 +1577,10 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     if (o.showConfirmButton === null) o.showConfirmButton = !!o.range || !!o.confirmMode;
     if (!o.weekends) o.weekends = { jalali: [5], gregorian: [0, 6] };
     if (o.size !== 'sm' && o.size !== 'lg') o.size = 'md';
-    if (o.theme !== 'dark') o.theme = 'light';
+    if (o.theme !== 'dark' && o.theme !== 'auto') o.theme = 'light';
+    if (o.holidaySelectedStyle !== 'accent') o.holidaySelectedStyle = 'red';
+    if (o.dualDigits !== true && o.dualDigits !== 'same') o.dualDigits = false;
+    if (o.strictLimits === undefined) o.strictLimits = true;
     // ارقام فارسی/لاتین: true | false | 'auto' | { jalali: bool, gregorian: bool }
     var pd = o.persianDigits;
     if (pd === true || pd === false || isPlainObj(pd)) {
@@ -1867,7 +1942,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       this.panelEl = document.createElement('div');
       this.panelEl.className = cls('popup') + ' ' + cls(this.dir === 'ltr' ? 'ltr' : 'rtl') +
         (this.inline ? ' ' + cls('inline') : '') +
-        (o.theme === 'dark' ? ' ' + cls('theme-dark') : '') +
+        (o.theme === 'dark' ? ' ' + cls('theme-dark') : (o.theme === 'auto' ? ' ' + cls('theme-auto') : '')) +
         (o.size === 'sm' ? ' ' + cls('size-sm') : (o.size === 'lg' ? ' ' + cls('size-lg') : '')) +
         (o.className ? ' ' + o.className : '');
       this.panelEl.setAttribute('data-adp', this.uid);
@@ -1967,6 +2042,27 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
     },
 
     /** تعیین حالت نمایش (پاپ‌آپ معمولی یا مودال موبایل) */
+    /** اعمال کلاس‌های ظاهری (تم، اندازه، جهت) — قابل فراخوانی در زمان اجرا */
+    _applyLook: function () {
+      if (!this.panelEl) return this;
+      var o = this.options;
+      var cls = this.cls.bind(this);
+      ['theme-dark', 'theme-auto', 'size-sm', 'size-lg', 'ltr', 'rtl'].forEach(function (n) {
+        this.panelEl.classList.remove(this.prefix + n);
+      }, this);
+      this.panelEl.classList.add(this.dir === 'ltr' ? cls('ltr') : cls('rtl'));
+      if (o.theme === 'dark') this.panelEl.classList.add(cls('theme-dark'));
+      else if (o.theme === 'auto') this.panelEl.classList.add(cls('theme-auto'));
+      if (o.size === 'sm') this.panelEl.classList.add(cls('size-sm'));
+      else if (o.size === 'lg') this.panelEl.classList.add(cls('size-lg'));
+      if (o.accent) this.panelEl.style.setProperty('--' + this.prefix + 'accent', o.accent);
+      if (this.fieldEl) {
+        this.fieldEl.classList.remove(cls('theme-dark'));
+        if (o.theme === 'dark') this.fieldEl.classList.add(cls('theme-dark'));
+      }
+      return this;
+    },
+
     _applyMode: function () {
       if (this.inline) return;
       var small = this.options.mobileModal && typeof window !== 'undefined' &&
@@ -2127,6 +2223,9 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       // اجرای رویدادهای شخصی متصل به این روز (در حالت تأییدی، هنگام تأیید اجرا می‌شوند)
       if (!o.confirmMode) this._fireDayEvents(dobj, { committed: true });
 
+      // هماهنگی پنل‌های دیگر با تاریخ انتخاب‌شده
+      this._syncViewsTo(dobj.jdn, dobj.calendar);
+
       this.render();
 
       if (complete && !o.confirmMode) {
@@ -2166,6 +2265,18 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       return this;
     },
 
+    /** هماهنگ کردن ماهِ پنل‌های دیگر با یک تاریخ مشخص */
+    _syncViewsTo: function (jdn, exceptCal) {
+      if (this.options.syncViews === false || this.calendars.length < 2 || jdn == null) return this;
+      var self = this;
+      this.calendars.forEach(function (cal) {
+        if (cal === exceptCal) return;
+        var p = CALENDARS[cal].fromJdn(jdn);
+        self.state.view[cal] = { y: p.y, m: p.m };
+      });
+      return this;
+    },
+
     /** رفتن به امروز و انتخاب آن */
     goToday: function () {
       var now = new Date();
@@ -2189,18 +2300,30 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       return this;
     },
 
-    /** پرش نمای یک تقویم بر اساس تعداد ماه */
+    /** پرش نمای پنل‌ها بر اساس تعداد ماه (در صورت فعال بودن syncViews همه با هم) */
     shift: function (cal, monthDelta, yearDelta) {
-      var v = this.state.view[cal] || { y: CALENDARS[cal].minYear, m: 1 };
       var months = monthDelta + yearDelta * 12;
+      var targets = (this.options.syncViews !== false && this.calendars.length > 1) ? this.calendars : [cal];
+      var self = this;
+      targets.forEach(function (c) { self._shiftOne(c, months); });
+      this.render();
+      return this;
+    },
+
+    /** جابه‌جایی ماهِ یک پنل مشخص */
+    _shiftOne: function (cal, months) {
+      var v = this.state.view[cal];
+      if (!v) {
+        var t = CALENDARS[cal].fromJdn(this.todayJdn || this._todayJdn());
+        v = { y: t.y, m: t.m };
+      }
       var total = (v.y * 12 + (v.m - 1)) + months;
       var ny = Math.floor(total / 12);
-      var nm = (total % 12) + 1;
+      var nm = ((total % 12) + 12) % 12 + 1;
       if (ny < CALENDARS[cal].minYear) { ny = CALENDARS[cal].minYear; nm = 1; }
       if (ny > CALENDARS[cal].maxYear) { ny = CALENDARS[cal].maxYear; nm = 12; }
       this.state.view[cal] = { y: ny, m: nm };
       if (isFn(this.options.onMonthChange)) this.options.onMonthChange({ calendar: cal, y: ny, m: nm }, this);
-      this.render();
       return this;
     },
 
@@ -2320,7 +2443,8 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       if (!this.state.from) return '';
       var t1 = this.fmt(this.state.from, this.state.from.calendar);
       if (this._isRange()) {
-        out = t1 + o.rangeSeparator + (this.state.to ? this.fmt(this.state.to, this.state.to.calendar) : '');
+        // وقتی فقط تاریخ شروع انتخاب شده باشد، به‌جای جداکننده‌ی خالی، «…» نمایش داده می‌شود
+        out = t1 + o.rangeSeparator + (this.state.to ? this.fmt(this.state.to, this.state.to.calendar) : '…');
       } else {
         out = t1;
       }
@@ -2389,6 +2513,12 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         txt.classList[(text ? 'remove' : 'add')]('' + this.cls('placeholder'));
         this.fieldEl.classList[(text ? 'add' : 'remove')](this.cls('has-value'));
       }
+    },
+
+    /** لاگ پیام‌های داخلی (قابل مشاهده با گزینه‌ی onLog) */
+    _log: function (msg) {
+      if (isFn(this.options.onLog)) this.options.onLog(msg, this);
+      return this;
     },
 
     _emitChange: function () {
@@ -2687,21 +2817,28 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
      *  تنظیم مقدار (عمومی)
      * =================================================================== */
 
-    /** تعیین تاریخ انتخاب‌شده */
-    setDate: function (input, silent) {
+    /**
+     * تعیین تاریخ انتخاب‌شده
+     *  silent : بدون رندر/رویداد
+     *  force  : حتی اگر تاریخ غیرفعال باشد هم تنظیم شود (نقض strictLimits)
+     */
+    setDate: function (input, silent, force) {
       var d = this.toDateObj(input, isStr(input) && guessCalendar(input) ? null : this.primary);
       if (!d) return this;
-      if (this._isRange()) {
-        this.state.to = null;
+      if (!force && this.options.strictLimits !== false && this.isDisabled(d)) {
+        this._log('ADP: تاریخ «' + this.fmt(d, d.calendar) + '» غیرفعال است و تنظیم نشد.');
+        return this;
       }
+      if (this._isRange()) this.state.to = null;
       this.state.from = d;
       this.state.view[d.calendar] = { y: d.y, m: d.m };
+      this._syncViewsTo(d.jdn, d.calendar);
       if (!silent) { this.render(); this._commit(true); }
       return this;
     },
 
-    /** تعیین بازه‌ی انتخابی */
-    setRange: function (from, to, silent) {
+    /** تعیین بازه‌ی انتخابی (force برای نادیده گرفتن محدودیت‌ها) */
+    setRange: function (from, to, silent, force) {
       if (isStr(from) && to == null) {
         var parts = String(from).split(/\s*(?:,|;|\u060C|—|–|\s+تا\s+|\s+to\s+|\s+-\s+|\s*\.\.\s*)\s*/i);
         if (parts.length >= 2) { to = parts[1]; from = parts[0]; }
@@ -2709,10 +2846,23 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       var f = this.toDateObj(from, isStr(from) && guessCalendar(from) ? null : this.primary);
       var t = to == null ? null : this.toDateObj(to, isStr(to) && guessCalendar(to) ? null : this.primary);
       if (!f && !t) return this;
+      if (!force && this.options.strictLimits !== false) {
+        if (f && this.isDisabled(f)) {
+          this._log('ADP: تاریخ شروع غیرفعال است و بازه تنظیم نشد.');
+          return this;
+        }
+        if (t && this.isDisabled(t)) {
+          this._log('ADP: تاریخ پایان غیرفعال است و بازه تنظیم نشد.');
+          return this;
+        }
+      }
       if (!this._isRange()) this.options.range = true;
       this.state.from = f;
       this.state.to = t;
-      if (f) this.state.view[f.calendar] = { y: f.y, m: f.m };
+      if (f) {
+        this.state.view[f.calendar] = { y: f.y, m: f.m };
+        this._syncViewsTo(f.jdn, f.calendar);
+      }
       if (!silent) { this.render(); this._commit(true); }
       return this;
     },
@@ -2730,7 +2880,20 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         this.calendars = resolveCalendars(this.options.calendar);
         this.primary = this.calendars.indexOf(this.options.primaryCalendar) !== -1 ? this.options.primaryCalendar : this.calendars[0];
       }
-      if (patch && patch.accent) this.panelEl.style.setProperty('--' + this.prefix + 'accent', patch.accent);
+      if (patch && (patch.theme || patch.size || patch.accent || patch.dir)) {
+        this.dir = this.options.dir || CALENDARS[this.primary].dir;
+        this._applyLook();
+      }
+      if (patch && patch.syncViews !== undefined) this.options.syncViews = patch.syncViews !== false;
+      if (patch && patch.strictLimits !== undefined) this.options.strictLimits = patch.strictLimits !== false;
+      if (patch && patch.holidaySelectedStyle) this.options.holidaySelectedStyle = patch.holidaySelectedStyle;
+      if (patch && patch.dayEvents) this.setDayEvents(patch.dayEvents);
+      if (patch && (patch.persianDigits !== undefined || patch.dualDigits !== undefined)) {
+        this.options.persianDigits = resolveOptions({ persianDigits: patch.persianDigits === undefined ? this.options.persianDigits : patch.persianDigits }).persianDigits;
+        this.options.dualDigits = patch.dualDigits === undefined ? this.options.dualDigits
+          : (patch.dualDigits === 'same' ? 'same' : !!patch.dualDigits);
+        if (this.output && (this.isInput || this.isTextarea)) this._syncOutputs(this.text());
+      }
       this.render();
       return this;
     },
@@ -2959,6 +3122,12 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       if (inRange) className += ' ' + cls('in-range');
       if (isStart) className += ' ' + cls('range-start') + ' ' + cls('selected');
       if (isEnd) className += ' ' + cls('range-end') + ' ' + cls('selected');
+      // روز تعطیل/جمعه‌ای که انتخاب شده باشد، قرمز نمایش داده می‌شود
+      var isOffDay = isHoliday || (isWeekend && o.highlightWeekends);
+      if (o.holidaySelectedStyle !== 'accent' && isOffDay) {
+        if (isStart || isEnd) className += ' ' + cls('sel-holiday');
+        else if (inRange) className += ' ' + cls('sel-holiday');
+      }
 
       // رنگ تعطیلات و جمعه
       var style = o.holidayStyle || 'red';
@@ -2977,11 +3146,18 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         });
       }
 
-      var label = formatDate({ calendar: cal, y: y, m: m, d: d, jdn: jdn }, 'dddd D MMMM YYYY', { lang: this.panelLang(cal) });
+      var label = formatDate({ calendar: cal, y: y, m: m, d: d, jdn: jdn }, 'dddd D MMMM YYYY',
+        { lang: this.panelLang(cal), persianDigits: this.usePersianDigits(cal) });
+      if (o.dualDigits) {
+        var otherCal = cal === 'jalali' ? 'gregorian' : 'jalali';
+        var op = CALENDARS[otherCal].fromJdn(jdn);
+        label += ' — ' + formatDate({ calendar: otherCal, y: op.y, m: op.m, d: op.d, jdn: jdn }, 'D MMMM YYYY',
+          { lang: this.panelLang(otherCal), persianDigits: this.usePersianDigits(otherCal) });
+      }
       if (title) label += ' — ' + title;
       if (disabled) label += ' (' + (this.calLang === 'en' ? 'unavailable' : 'غیرقابل انتخاب') + ')';
 
-      var html = '<button type="button" class="' + className + '" data-day="' + jdn + '" role="gridcell"' +
+      var html = '<button type="button" class="' + className + '" data-day="' + jdn + '" data-cal="' + cal + '" role="gridcell"' +
         ' tabindex="' + (this.state.focusJdn === jdn ? '0' : '-1') + '"' +
         ' aria-selected="' + ((isStart || isEnd) ? 'true' : 'false') + '"' +
         (inRange ? ' aria-inrange="true"' : '') +
@@ -2990,7 +3166,14 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         (disabled ? ' disabled aria-disabled="true"' : '') + '>';
       html += '<span class="' + cls('day-num') + '">' + this.num(d, cal) + '</span>';
       if (o.dualDigits) {
-        html += '<span class="' + cls('day-sub') + '">' + (cal === 'jalali' ? d : toFaDigits(d)) + '</span>';
+        var subCal = cal === 'jalali' ? 'gregorian' : 'jalali';
+        var subDay;
+        if (o.dualDigits === 'same') {
+          subDay = this.num(d, subCal);            // همان عدد با ارقام تقویم دیگر
+        } else {
+          subDay = this.num(CALENDARS[subCal].fromJdn(jdn).d, subCal);   // عدد روزِ معادل در تقویم دیگر
+        }
+        html += '<span class="' + cls('day-sub') + '" aria-hidden="true">' + subDay + '</span>';
       }
       if (style === 'dot' || style === 'both') {
         if ((isHoliday || isWeekend) && o.highlightWeekends) html += '<span class="' + cls('dot') + '"></span>';
@@ -3207,8 +3390,9 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         var dayBtn = closest(t, '[data-day]');
         if (dayBtn) {
           e.preventDefault();
+          if (self._isCellDisabled(dayBtn)) return;      // روزهای غیرفعال هرگز انتخاب نمی‌شوند
           var jdn = +dayBtn.getAttribute('data-day');
-          self._selectByJdn(jdn);
+          self._selectByJdn(jdn, dayBtn.getAttribute('data-cal'));
           return;
         }
         var monthBtn = closest(t, '[data-month]');
@@ -3241,7 +3425,7 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
         var holItem = closest(t, '[data-holiday-item]');
         if (holItem) {
           e.preventDefault();
-          self._selectByJdn(+holItem.getAttribute('data-holiday-item'));
+          self._selectByJdn(+holItem.getAttribute('data-holiday-item'), holItem.getAttribute('data-cal'));
           return;
         }
         var foot = closest(t, '[data-foot]');
@@ -3330,12 +3514,29 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       this.render();
     },
 
-    /** انتخاب روز از روی JDN */
-    _selectByJdn: function (jdn) {
-      var cal = this.state.active || this.primary;
-      var p = CALENDARS[cal].fromJdn(jdn);
-      var dobj = { calendar: cal, y: p.y, m: p.m, d: p.d, jdn: jdn, hh: this.state.time ? this.state.time.hh : 0, mm: this.state.time ? this.state.time.mm : 0, ss: this.state.time ? this.state.time.ss : 0 };
+    /** آیا این خانه‌ی روز غیرفعال است؟ */
+    _isCellDisabled: function (el) {
+      if (!el) return true;
+      return el.disabled === true || el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
+    },
+
+    /**
+     * انتخاب روز از روی JDN
+     *  cal : تقویمِ پنلی که کاربر روی آن کلیک کرده است (برای ارزیابی درست
+     *        محدودیت‌های وابسته به تقویم مثل تعطیلات و روزهای غیرفعال)
+     */
+    _selectByJdn: function (jdn, cal) {
+      var calendar = CALENDARS[cal] ? cal : (this.state.active || this.primary);
+      var p = CALENDARS[calendar].fromJdn(jdn);
+      var dobj = {
+        calendar: calendar, y: p.y, m: p.m, d: p.d, jdn: jdn,
+        hh: this.state.time ? this.state.time.hh : 0,
+        mm: this.state.time ? this.state.time.mm : 0,
+        ss: this.state.time ? this.state.time.ss : 0
+      };
+      if (this.isDisabled(dobj)) return this;   // روز غیرفعال در این تقویم انتخاب نمی‌شود
       this.selectDate(dobj);
+      return this;
     },
 
     /* ---------------------------------------------------------------- */
@@ -3369,7 +3570,19 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       if (delta === 'home') { this.focusJdn(cur - ((weekdayFromJdn(cur) - this.weekStartOf(cal) + 7) % 7)); return; }
       if (delta === 'end') { this.focusJdn(cur - ((weekdayFromJdn(cur) - this.weekStartOf(cal) + 7) % 7) + 6); return; }
       if (!delta) return;
-      this.focusJdn(cur + delta);
+      this.focusJdn(this._nextEnabledJdn(cur + delta, delta > 0 ? 1 : -1));
+    },
+
+    /** نزدیک‌ترین روز قابل انتخاب در جهت حرکت (پرش از روی روزهای غیرفعال) */
+    _nextEnabledJdn: function (jdn, step) {
+      var cal = this.state.active || this.primary;
+      for (var i = 0; i < 90; i++) {
+        var p = CALENDARS[cal].fromJdn(jdn);
+        var dobj = { calendar: cal, y: p.y, m: p.m, d: p.d, jdn: jdn, hh: 0, mm: 0, ss: 0 };
+        if (!this.isDisabled(dobj)) return jdn;
+        jdn += step;
+      }
+      return jdn;
     },
 
     /** انتقال فوکوس به روز مشخص (با تغییر ماه در صورت نیاز) */
@@ -3391,7 +3604,10 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
       }
       this.state.focusJdn = jdn;
       this.state.viewMode[cal] = 'days';
-      if (needRender) this.render();
+      if (needRender) {
+        this._syncViewsTo(jdn, cal);
+        this.render();
+      }
       var el = this.$('[data-day="' + jdn + '"]');
       if (el) {
         this.$$('[data-day]').forEach(function (d) { d.setAttribute('tabindex', '-1'); });
@@ -3518,6 +3734,30 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 
     /** بازسازی پنل */
     refresh: function () { return this.render(); },
+
+    /** تغییر تم در زمان اجرا: 'light' | 'dark' | 'auto' */
+    setTheme: function (theme) {
+      this.options.theme = (theme === 'dark' || theme === 'auto') ? theme : 'light';
+      this._applyLook();
+      this.render();
+      return this;
+    },
+
+    /** خواندن تم فعلی */
+    getTheme: function () { return this.options.theme; },
+
+    /** تنظیم نمایش عدد معادل تقویم دیگر زیر روزها */
+    setDualDigits: function (value) {
+      this.options.dualDigits = (value === 'same') ? 'same' : !!value;
+      this.render();
+      return this;
+    },
+
+    /** فعال/غیرفعال کردن هماهنگی ماهِ پنل‌ها */
+    setSyncViews: function (flag) {
+      this.options.syncViews = flag !== false;
+      return this;
+    },
 
     /** تنظیم تاریخ نمایش‌داده‌شده در پنل (بدون تغییر مقدار انتخاب‌شده) */
     setViewDate: function (input, calendar) {

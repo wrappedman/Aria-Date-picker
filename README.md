@@ -10,7 +10,7 @@
 </script>
 ```
 
-> نسخه: `1.1.0` — مجوز: GPL-3.0 — حجم: ~۱۵۵ کیلوبایت (غیرفشرده) / ~۸۴ کیلوبایت (min)
+> نسخه: `1.1.2` — مجوز: GPL-3.0 — حجم: ~۱۵۵ کیلوبایت (غیرفشرده) / ~۸۴ کیلوبایت (min)
 
 ---
 
@@ -52,7 +52,9 @@
 | کنترل بسته‌شدن | تعیین بسته‌شدن یا بازماندن پنجره پس از انتخاب (`closeOnSelect` / `closeOnSelectRange`) |
 | سوییچ تقویم | دکمه‌ی سوییچ برای نمایش هم‌زمان میلادی یا تعویض کامل تقویم (`switchToCalendar` / `switchMode`) |
 | تاریخ پیش‌فرض | تعیین نمای شروع (`initialDate`) و مقدار پیش‌فرض کادر (`defaultDate`) |
-| رنگ‌بندی تعطیلات | جمعه‌ها و تعطیلات رسمی به‌صورت پیش‌فرض قرمز |
+| رنگ‌بندی تعطیلات | جمعه‌ها و تعطیلات رسمی قرمز — و حتی پس از انتخاب هم قرمز می‌مانند |
+| هماهنگی پنل‌ها | با انتخاب یک روز، پنل تقویم دیگر روی همان تاریخ می‌رود (`syncViews`) |
+| نگهبان روزهای غیرفعال | روزهای غیرفعال با ماوس، کیبورد و API هم انتخاب نمی‌شوند (`strictLimits`) |
 | یونیک‌سازی کلاس‌ها | همه‌ی کلاس‌ها با پیشوند `adp-` و قابل تغییر با گزینه‌ی `prefix` |
 | امکانات کامل | ناوبری ماه/سال، دکمه‌ی امروز/پاک کردن، تأیید، انتخاب ساعت، تم تاریک، حالت inline، مودال موبایل، پشتیبانی کیبورد و ARIA |
 
@@ -346,7 +348,9 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | `defaultDate` / `defaultRange` | `null` | مقدار پیش‌فرض انتخاب‌شده |
 | `initialView` | `'days'` | نمای شروع هر پنل: `'days'`، `'months'`، `'years'` |
 | `placeholder` | خودکار | متن جای‌خالی کادر |
-| `dir`, `theme`, `size`, `accent`, `zIndex`, `className`, `minWidth` | — | ظاهر و چیدمان |
+| `theme` | `'light'` | `'light'`، `'dark'` یا `'auto'` (پیروی از `prefers-color-scheme`) |
+| `dualDigits` | `false` | `true` = عدد روز معادل تقویم دیگر زیر عدد اصلی؛ `'same'` = همان عدد با ارقام دیگر |
+| `dir`, `size`, `accent`, `zIndex`, `className`, `minWidth` | — | ظاهر و چیدمان |
 
 ### انتخاب و محدودیت
 
@@ -372,6 +376,9 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | `showOutsideDays` | `true` | نمایش روزهای ماه‌های مجاور |
 | `highlightWeekends` | `true` | رنگ قرمز برای جمعه‌ها |
 | `holidayStyle` | `'red'` | `'red'`، `'dot'`، `'both'`، `'none'` |
+| `holidaySelectedStyle` | `'red'` | رنگ روز تعطیل/جمعه‌ی انتخاب‌شده: `'red'` (قرمز) یا `'accent'` (آبی) |
+| `syncViews` | `true` | هماهنگی ماهِ پنل‌ها با تاریخ انتخاب‌شده و با ناوبری (`false` = مستقل) |
+| `strictLimits` | `true` | تاریخ‌های غیرفعال حتی با `setDate`/`setRange` هم تنظیم نشوند |
 | `showTodayButton` / `showClearButton` / `showConfirmButton` / `showCloseButton` | خودکار | دکمه‌های پاصفحه |
 
 ### تعطیلات
@@ -420,7 +427,11 @@ dp.setDate('1405/01/01'); dp.setRange('1405/01/01', '1405/01/13');
 dp.clear(); dp.goToday(); dp.applySelection();
 dp.setLimits({ mode: 'range', from: '1405/01/01', to: '1405/06/31' }); dp.getLimits();
 dp.setCalendar('gregorian'); dp.getCalendar(); dp.getCalendars();
-dp.setOptions({ theme: 'dark' }); dp.setViewDate('1405/07/01'); dp.getViewDate();
+dp.setOptions({ theme: 'dark' }); dp.setTheme('auto'); dp.getTheme();
+dp.setDualDigits(true); dp.setSyncViews(false);
+dp.setDate('1405/01/01', false, true);   // force = نقض محدودیت‌ها
+dp.setRange('1405/01/01', '1405/01/13', false, true);
+dp.setViewDate('1405/07/01'); dp.getViewDate();
 dp.setDisabled(true); dp.refresh();
 dp.getHolidays(1405, 'jalali');  dp.isHoliday();  dp.getHolidayTitle();
 dp.setDayEvents({...}); dp.addDayEvent({...}); dp.removeDayEvent('dayEvent1');
@@ -436,7 +447,7 @@ dp.destroy();
 توابع مستقل:
 
 ```js
-AriaDatePicker.version;                       // '1.1.0'
+AriaDatePicker.version;                       // '1.1.2'
 AriaDatePicker.instances;                     // همه‌ی نمونه‌های فعال
 AriaDatePicker.get(element);                  // یافتن نمونه از روی عنصر
 AriaDatePicker.autoInit(document, options);   // راه‌اندازی خودکار
@@ -547,6 +558,39 @@ AriaDatePicker.addProvider('jalali', {
 
 ---
 
+## رفتارهای مهم (نسخه‌ی ۱.۱.۲)
+
+### رنگ روز تعطیل انتخاب‌شده
+روزهای تعطیل (و جمعه‌ها) حتی پس از انتخاب هم **قرمز** می‌مانند و رنگ آبی انتخاب روی آن‌ها اعمال نمی‌شود.
+برای برگرداندن رفتار قبلی (آبی شدن با انتخاب) گزینه‌ی `holidaySelectedStyle: 'accent'` را تنظیم کنید.
+
+### عدد معادل تقویم دیگر
+با `dualDigits: true` زیر عدد اصلی هر روز، عدد روز **معادل در تقویم دیگر** نمایش داده می‌شود
+(مثلاً در پنل شمسی برای «۱ فروردین ۱۴۰۵» عدد `21` که همان ۲۱ مارس است و در پنل میلادی عدد `۱`).
+برای نمایش همان عدد با شکل ارقام دیگر، از `dualDigits: 'same'` استفاده کنید.
+
+### هماهنگی پنل‌ها
+وقتی هر دو تقویم باز هستند (`calendar: 'both'`)، با انتخاب یک روز، ماهِ پنل دیگر با تاریخ انتخاب‌شده
+هماهنگ می‌شود (روز انتخاب‌شده در هر دو پنل مشخص است) و ناوبری ماه/سال هر دو پنل را با هم جابه‌جا می‌کند.
+برای غیرفعال کردن: `syncViews: false` یا `dp.setSyncViews(false)`.
+
+### روزهای غیرفعال
+روزهای خارج از بازه‌ی مجاز، روزهای تعطیل (با `disableHolidays`)، آخر هفته‌های غیرفعال، مقادیر
+`disabledDates`/`disabledRanges`/`disabledDays` و رویدادهای دارای `disabled: true`:
+- با ماوس روی خودِ عدد هم قابل کلیک نیستند (نگهبان در لایه‌ی رویداد + قاعده‌ی CSS `pointer-events: none`)
+- با کیبورد از روی آن‌ها پریده می‌شود
+- با `setDate`/`setRange` هم تنظیم نمی‌شوند (مگر با آرگومان `force`)
+- محدودیت‌ها بر اساس **تقویم همان پنل** ارزیابی می‌شوند؛ بنابراین اگر روزی در تقویم میلادی تعطیل است
+  ولی در شمسی آزاد، فقط در همان پنلی که غیرفعال نشان داده شده قابل انتخاب نیست.
+
+### تم تاریک
+```js
+theme: 'dark'            // همیشه تیره
+theme: 'auto'            // بر اساس prefers-color-scheme سیستم
+dp.setTheme('dark');     // تغییر در زمان اجرا (یا setOptions({theme:'dark'}))
+```
+دموی صفحه شامل یک کنترل زنده برای تم و اندازه است.
+
 ## قالب‌بندی و تحلیل تاریخ
 
 توکن‌های پشتیبانی‌شده در گزینه‌ی `format` و `AriaDatePicker.format`:
@@ -633,7 +677,7 @@ src/07-api.js         API عمومی، autoInit، تابع‌های کمکی و 
 
 ```bash
 npm run build     # ساخت aria-datepicker.js و dist/aria-datepicker.min.js
-npm test          # ۱۵۴ تست موتور تقویم، انتخاب، محدودیت‌ها، تعطیلات، رویدادها و سوییچ تقویم + ۳۷ تست صفحه‌ی دمو (jsdom)
+npm test          # ۱۹۶ تست موتور تقویم، انتخاب، محدودیت‌ها، تعطیلات، رویدادها و سوییچ تقویم + ۴۰ تست صفحه‌ی دمو (jsdom)
 ```
 
 > خروجی نهایی همان `aria-datepicker.js` است؛ می‌توانید فایل ساخته‌شده را مستقیم در پروژه‌ی خود استفاده کنید.

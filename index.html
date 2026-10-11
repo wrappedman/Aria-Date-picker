@@ -206,10 +206,11 @@
         </select>
       </div>
       <div class="field-group">
-        <label>نمایش عدد دوگانه در خانه‌ها</label>
+        <label>عدد روزِ معادل تقویم دیگر زیر عدد اصلی</label>
         <select class="ui" id="digits-dual">
           <option value="off">خاموش</option>
-          <option value="on">روشن</option>
+          <option value="on">روشن (مثلاً ۱ فروردین ↔ 21 مارس)</option>
+          <option value="same">همان عدد با ارقام تقویم دیگر</option>
         </select>
       </div>
     </div>
@@ -437,6 +438,8 @@ dp.getDayEvents();        dp.triggerDayEvents('1405/01/05');   dp.getLastDayEven
     </div>
     <div class="out" id="out-events">لاگ رویدادها: هنوز رویدادی اجرا نشده است.</div>
     <div class="note">
+      توجه: روزهای تعطیل (و جمعه‌ها) حتی وقتی انتخاب می‌شوند هم <b>قرمز</b> باقی می‌مانند و آبی نمی‌شوند؛
+      برای برگرداندن رفتار آبی می‌توانید <code>holidaySelectedStyle: 'accent'</code> را تنظیم کنید.<br>
       رویداد «سفر» تا اولین اجرا فعال است (<code>once: true</code>)، رویدادهای روزهای مشخص با نشانگر آبی و
       کلاس دلخواه <code>className</code> مشخص می‌شوند و با <code>disabled: true</code> می‌توان روزی را
       غیرقابل انتخاب کرد. رویداد سراسری <code>adp:dayevent</code> هم روی عنصر هدف ارسال می‌شود.
@@ -523,21 +526,43 @@ dp.switchCalendar('gregorian'); dp.showGregorian(); dp.hideGregorian(); dp.showB
   <!-- ============================================================ -->
   <section class="card">
     <h2><span class="num">۷</span> نمایش همیشه‌باز (inline)، تم تاریک و رنگ سفارشی</h2>
+    <p class="desc">
+      تم با گزینه‌ی <code>theme</code> تعیین می‌شود: <code>'light'</code>، <code>'dark'</code> یا
+      <code>'auto'</code> (پیروی از تنظیمات سیستم). در زمان اجرا هم با
+      <code>setTheme('dark')</code> یا <code>setOptions({ theme: 'dark' })</code> قابل تغییر است.
+    </p>
 <pre>AriaDatePicker.create('#demo-inline', {
   calendar: 'jalali',
   inline: true,
-  theme: 'dark',
+  theme: 'dark',        // 'light' | 'dark' | 'auto'
   accent: '#7c3aed',
   size: 'md',
   showHolidayList: false
-});</pre>
+});
+
+// تغییر در زمان اجرا
+dp.setTheme('dark');               // یا: dp.setOptions({ theme: 'auto' });</pre>
     <div class="demo-row" style="margin-top:16px; align-items:flex-start">
       <div class="field-group">
         <label>پنل همیشه‌باز</label>
         <div id="demo-inline"></div>
       </div>
       <div class="field-group">
-        <label>فیلد ساخته‌شده روی div</label>
+        <label>تم پنل</label>
+        <select class="ui" id="theme-mode">
+          <option value="light">روشن (light)</option>
+          <option value="dark" selected>تیره (dark)</option>
+          <option value="auto">خودکار (auto)</option>
+        </select>
+        <label>اندازه</label>
+        <select class="ui" id="size-mode">
+          <option value="sm">کوچک</option>
+          <option value="md" selected>متوسط</option>
+          <option value="lg">بزرگ</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>فیلد ساخته‌شده روی div (پاپ‌آپ، تم تیره)</label>
         <div id="demo-div"></div>
       </div>
     </div>
@@ -602,6 +627,10 @@ AriaDatePicker.create('#demo-form-field', {
         <tr><td><code>onCalendarChange</code></td><td>تابع</td><td>تغییر تقویم با دکمه‌ی سوییچ</td></tr>
         <tr><td><code>weekends</code></td><td>{ jalali: [5], gregorian: [0,6] }</td><td>روزهای تعطیل هفتگی (0=یکشنبه … 6=شنبه)</td></tr>
         <tr><td><code>holidayStyle</code></td><td>'red' | 'dot' | 'both' | 'none'</td><td>نحوه‌ی نمایش تعطیلات</td></tr>
+        <tr><td><code>holidaySelectedStyle</code></td><td>'red' | 'accent'</td><td>رنگ روز تعطیلِ انتخاب‌شده (پیش‌فرض قرمز)</td></tr>
+        <tr><td><code>syncViews</code></td><td>true | false</td><td>هماهنگی ماهِ پنل‌ها با تاریخ انتخاب‌شده و با ناوبری</td></tr>
+        <tr><td><code>strictLimits</code></td><td>true | false</td><td>تاریخ‌های غیرفعال حتی با setDate/setRange هم تنظیم نشوند</td></tr>
+        <tr><td><code>theme</code></td><td>'light' | 'dark' | 'auto'</td><td>تم روشن/تیره/خودکار (قابل تغییر با setTheme)</td></tr>
         <tr><td><code>disableHolidays</code> / <code>disableWeekends</code></td><td>true | false</td><td>غیرقابل انتخاب شدن تعطیلات / جمعه‌ها</td></tr>
         <tr><td><code>disabledDays</code> / <code>disabledDates</code> / <code>disabledRanges</code></td><td>آرایه</td><td>غیرفعال‌سازی روزهای هفته، تاریخ‌ها یا بازه‌ها</td></tr>
         <tr><td><code>blackout</code></td><td>تابع <code>(date) =&gt; boolean</code></td><td>منطق دلخواه برای غیرفعال کردن روزها</td></tr>
@@ -694,7 +723,7 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
   </section>
 
   <footer>
-    Aria Date Picker — نسخه ۱.۱.۰ | مجوز GPL-3.0 | ساخته‌شده با جاوااسکریپت خالص و بدون وابستگی
+    Aria Date Picker — نسخه ۱.۱.۲ | مجوز GPL-3.0 | ساخته‌شده با جاوااسکریپت خالص و بدون وابستگی
   </footer>
 </div>
 
@@ -795,7 +824,7 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
     out('out-digits', 'حالت فعلی: <b>' + esc(this.options[this.selectedIndex].text) + '</b> — کادر را باز کنید تا تفاوت را ببینید.');
   });
   document.getElementById('digits-dual').addEventListener('change', function () {
-    digitsPicker.setOptions({ dualDigits: this.value === 'on' });
+    digitsPicker.setOptions({ dualDigits: this.value === 'off' ? false : (this.value === 'same' ? 'same' : true) });
   });
 
   /* ---------- ۳) حالت بازه ---------- */
@@ -964,11 +993,18 @@ AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // {
     initialDate: 'today',
     showHolidayList: false
   });
+  document.getElementById('theme-mode').addEventListener('change', function () {
+    inlineDark.setTheme(this.value);
+    divField.setTheme(this.value);
+  });
+  document.getElementById('size-mode').addEventListener('change', function () {
+    inlineDark.setOptions({ size: this.value });
+  });
 
   var divField = ADP.create('#demo-div', {
     calendar: 'jalali',
-    theme: 'light',
-    size: 'lg'
+    theme: 'dark',
+    size: 'md'
   });
 
   /* ---------- ۸) فیلد div + فیلد مخفی فرم ---------- */
