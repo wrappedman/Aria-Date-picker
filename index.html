@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aria Date Picker — دیت‌پیکر شمسی و میلادی (تک‌فایلی)</title>
+<meta name="description" content="دیت‌پیکر کامل شمسی و میلادی با جاوااسکریپت خالص، بدون وابستگی، همراه با پشتیبانی از تعطیلات، حالت بازه و محدودسازی تاریخ.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+<style>
+  /* ---------------------------------------------------------------
+     استایل مخصوص این صفحه‌ی دمو — هیچ کلاسی با پیشوند adp- ندارد
+     (دیت‌پیکر همه‌ی استایل خود را داخل فایل جاوااسکریپت تزریق می‌کند)
+     --------------------------------------------------------------- */
+  :root {
+    --page-bg: #f5f7fb;
+    --card: #ffffff;
+    --ink: #1e2736;
+    --muted: #6b7789;
+    --line: #e3e8f0;
+    --brand: #2f6bff;
+    --brand-soft: #eaf0ff;
+    --ok: #0e9f6e;
+    --warn: #b7791f;
+    --code-bg: #f3f5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--ink);
+    font-family: Vazirmatn, "Segoe UI", Tahoma, sans-serif;
+    line-height: 1.9;
+    font-size: 15px;
+  }
+  .shell { max-width: 1080px; margin: 0 auto; padding: 20px 16px 80px; }
+  header.hero {
+    background: linear-gradient(135deg, #2f6bff, #6f4bff);
+    color: #fff;
+    border-radius: 20px;
+    padding: 28px 26px;
+    box-shadow: 0 18px 40px rgba(47, 107, 255, .28);
+  }
+  header.hero h1 { margin: 0 0 6px; font-size: 27px; }
+  header.hero p { margin: 0; opacity: .95; font-size: 14.5px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .badges span {
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.32);
+    padding: 3px 10px; border-radius: 999px; font-size: 12.5px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px; margin-top: 18px; box-shadow: 0 2px 10px rgba(30, 39, 54, .04);
+  }
+  .card > h2 { margin: 0 0 4px; font-size: 19px; display: flex; align-items: center; gap: 8px; }
+  .card > h2 .num {
+    background: var(--brand-soft); color: var(--brand); font-size: 13px;
+    width: 28px; height: 28px; border-radius: 9px; display: inline-flex;
+    align-items: center; justify-content: center; font-weight: 700;
+  }
+  .card > .desc { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+  .demo-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group label { font-size: 12.5px; color: var(--muted); }
+  input.ui, select.ui {
+    font: inherit; font-size: 14px; padding: 9px 12px; min-width: 200px;
+    border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+  }
+  input.ui:focus, select.ui:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  button.ui {
+    font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); transition: .15s;
+  }
+  button.ui:hover { border-color: var(--brand); color: var(--brand); }
+  button.ui.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.ui.primary:hover { filter: brightness(1.06); color: #fff; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; overflow: auto; direction: ltr; text-align: left; margin: 14px 0 0;
+    font-size: 12.7px; line-height: 1.75; font-family: "Fira Code", Consolas, monospace;
+  }
+  code { font-family: "Fira Code", Consolas, monospace; font-size: 12.8px; }
+  p code, li code, td code { background: var(--code-bg); padding: 1px 6px; border-radius: 6px; }
+  .out {
+    margin-top: 14px; background: #fbfcfe; border: 1px dashed var(--line);
+    border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--muted); min-height: 44px;
+  }
+  .out b { color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: right; vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 700; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .note {
+    border-inline-start: 4px solid var(--warn); background: #fff9ec;
+    padding: 10px 14px; border-radius: 10px; font-size: 13px; color: #6b5620; margin-top: 14px;
+  }
+  .note.ok { border-color: var(--ok); background: #effaf5; color: #14532d; }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 30px; }
+  ul { padding-inline-start: 22px; }
+  li { margin: 4px 0; }
+  .kbd { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; font-size: 12px; }
+  .tag { display: inline-block; background: var(--brand-soft); color: var(--brand); border-radius: 999px; padding: 1px 9px; font-size: 12px; }
+  @media (max-width: 640px) {
+    header.hero { padding: 20px 16px; }
+    header.hero h1 { font-size: 21px; }
+    .shell { padding: 14px 10px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="hero">
+    <h1>Aria Date Picker — دیت‌پیکر شمسی و میلادی</h1>
+    <p>یک فایل جاوااسکریپت، بدون هیچ وابستگی. تمام ظاهر برنامه داخل همان فایل قرار دارد و کلاس‌ها با پیشوند <code>adp-</code> نام‌گذاری شده‌اند تا با برنامه‌ی شما تداخل نکنند.</p>
+    <div class="badges">
+      <span>تک‌فایلی و بدون Dependency</span>
+      <span>تقویم شمسی + میلادی</span>
+      <span>حالت بازه (از — تا)</span>
+      <span>محدودسازی بازه‌ی انتخابی</span>
+      <span>تعطیلات از JSON و اینترنت</span>
+      <span>دسترسی‌پذیر با کیبورد</span>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۰</span> راه‌اندازی در ۱۰ ثانیه</h2>
+    <p class="desc">فقط فایل <code>aria-datepicker.js</code> را وارد کنید و یک ورودی بسازید. استایل‌ها به‌صورت خودکار تزریق می‌شوند.</p>
+<pre>&lt;input id="birthday" placeholder="تاریخ تولد"&gt;
+&lt;script src="aria-datepicker.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  AriaDatePicker.create('#birthday', { calendar: 'jalali' });
+&lt;/script&gt;</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ تولد (شمسی)</label>
+        <input id="demo-basic" class="ui" placeholder="انتخاب تاریخ">
+      </div>
+      <button class="ui" data-act="get-basic">خواندن مقدار</button>
+      <button class="ui" data-act="set-basic">تنظیم ۱۳۷۰/۰۲/۱۲</button>
+    </div>
+    <div class="out" id="out-basic">مقداری انتخاب نشده است.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱</span> انتخاب تاریخ شمسی و میلادی</h2>
+    <p class="desc">با گزینه‌ی <code>calendar</code> می‌توانید <code>'jalali'</code>، <code>'gregorian'</code> یا <code>'both'</code> (نمایش هم‌زمان دو تقویم) را انتخاب کنید.</p>
+<pre>AriaDatePicker.create('#demo-both', {
+  calendar: 'both',            // هر دو تقویم در یک پنل
+  primaryCalendar: 'jalali',   // تقویم اصلی (مبنای مقدار خروجی)
+  initialDate: 'today',        // نمای شروع روی امروز
+  defaultDate: '1404/01/01'    // مقدار پیش‌فرض کادر ورودی
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>هر دو تقویم</label>
+        <input id="demo-both" class="ui" placeholder="انتخاب تاریخ شمسی یا میلادی">
+      </div>
+      <button class="ui" data-act="get-both">خواندن مقدار</button>
+    </div>
+    <div class="out" id="out-both">با کلیک روی کادر، هر دو تقویم کنار هم نمایش داده می‌شوند.</div>
+
+    <div class="demo-row" style="margin-top:18px">
+      <div class="field-group">
+        <label>فقط میلادی</label>
+        <input id="demo-greg" class="ui" placeholder="mm/dd/yyyy">
+      </div>
+      <div class="field-group">
+        <label>تاریخ امروز (تنظیم خودکار)</label>
+        <input id="demo-today" class="ui">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱.۱</span> ارقام فارسی یا لاتین (قابل تنظیم برای هر دو تقویم)</h2>
+    <p class="desc">
+      با گزینه‌ی <code>persianDigits</code> می‌توانید ارقام را تعیین کنید. مقادیر مجاز:
+      <code>'auto'</code> (شمسی فارسی، میلادی لاتین)، <code>true</code> (همه فارسی)،
+      <code>false</code> (همه لاتین) یا به‌صورت تفکیکی <code>{ jalali: true, gregorian: false }</code>.
+      تغییر آن در زمان اجرا با <code>setOptions()</code> هم ممکن است.
+    </p>
+<pre>AriaDatePicker.create('#demo-digits', {
+  calendar: 'both',
+  persianDigits: true,                                  // همه فارسی
+  persianDigits: false,                                 // همه لاتین
+  persianDigits: 'auto',                                // پیش‌فرض: شمسی فارسی، میلادی لاتین
+  persianDigits: { jalali: true, gregorian: false }     // تنظیم تفکیکی هر تقویم
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ (هر دو تقویم)</label>
+        <input id="demo-digits" class="ui">
+      </div>
+      <div class="field-group">
+        <label>حالت ارقام</label>
+        <select class="ui" id="digits-mode">
+          <option value="auto">خودکار (شمسی فارسی / میلادی لاتین)</option>
+          <option value="fa">همه فارسی</option>
+          <option value="en">همه لاتین</option>
+          <option value="mix">تفکیکی: شمسی فارسی، میلادی لاتین</option>
+          <option value="mix2">تفکیکی: شمسی لاتین، میلادی فارسی</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>نمایش عدد دوگانه در خانه‌ها</label>
+        <select class="ui" id="digits-dual">
+          <option value="off">خاموش</option>
+          <option value="on">روشن</option>
+        </select>
+      </div>
+    </div>
+    <div class="out" id="out-digits">حالت فعلی: <b>خودکار</b> — کادر را باز کنید تا تفاوت ارقام دو تقویم را ببینید.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۲</span> تاریخ پیش‌فرض و نمای شروع</h2>
+    <p class="desc">
+      گزینه‌ی <code>initialDate</code> تعیین می‌کند پنل هنگام باز شدن روی چه ماهی باز شود
+      (<code>'today'</code>، <code>'now'</code>، تاریخ انتخابی، یا <code>'selected'</code>) و
+      گزینه‌ی <code>defaultDate</code> مقدار پیش‌فرض کادر را تعیین می‌کند.
+    </p>
+<pre>AriaDatePicker.create('#demo-default', {
+  calendar: 'jalali',
+  initialDate: '1405/01/01',   // پنل روی فروردین ۱۴۰۵ باز می‌شود
+  defaultDate: '1403/06/15',   // کادر با این تاریخ پر می‌شود
+  placeholder: 'تاریخ قرارداد'
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>نمای شروع + مقدار پیش‌فرض</label>
+        <input id="demo-default" class="ui">
+      </div>
+      <button class="ui" data-act="today-default">مقدار = امروز</button>
+      <button class="ui" data-act="lock-default">تنظیم نمای شروع از فرم</button>
+    </div>
+    <div class="out" id="out-default">پنل روی فروردین ۱۴۰۵ و کادر روی ۱۴۰۳/۰۶/۱۵ تنظیم شده است.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳</span> حالت بازه «از تاریخ تا تاریخ»</h2>
+    <p class="desc">با <code>range: true</code> می‌توانید یک بازه انتخاب کنید. با حرکت ماوس پیش‌نمایش بازه نمایش داده می‌شود و در حالت تأییدی (<code>confirmMode</code>) مقدار فقط با دکمه‌ی تأیید ثبت می‌شود.</p>
+<pre>AriaDatePicker.create('#demo-range', {
+  calendar: 'jalali',
+  range: true,
+  monthsPerPanel: 2,          // دو ماه در هر پنل
+  closeOnSelect: false,
+  onChange: function (v) {
+    console.log(v.from.text, 'تا', v.to && v.to.text);
+  }
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>بازه‌ی سفر</label>
+        <input id="demo-range" class="ui" placeholder="از تاریخ — تا تاریخ">
+      </div>
+      <button class="ui" data-act="get-range">خواندن بازه</button>
+      <button class="ui" data-act="set-range">تنظیم بازه‌ی نمونه</button>
+      <button class="ui" data-act="clear-range">پاک کردن</button>
+    </div>
+    <div class="out" id="out-range">هنوز بازه‌ای انتخاب نشده است.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۴</span> محدود کردن بازه‌ی انتخابی</h2>
+    <p class="desc">
+      با <code>limits</code> می‌توانید انتخاب را آزاد یا محدود به یک بازه کنید. حالت‌های
+      <code>free | range | before | after</code> پشتیبانی می‌شوند؛ همچنین
+      <code>minDays/maxDays</code> طول بازه، <code>disabledDays</code> روزهای هفته و
+      <code>disabledDates</code> روزهای مشخص را غیرفعال می‌کند.
+    </p>
+<pre>AriaDatePicker.create('#demo-limited', {
+  calendar: 'jalali',
+  range: true,
+  limits: {
+    mode: 'range',            // فقط بین دو تاریخ
+    from: '1404/01/01',
+    to:   '1404/06/31',
+    minDays: 2,               // حداقل ۲ روز
+    maxDays: 20               // حداکثر ۲۰ روز
+  },
+  disabledDays: [],           // مثلاً [5] برای غیرفعال کردن همه‌ی جمعه‌ها
+  disabledDates: ['1404/01/13', '1404/03/14']
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>بازه + محدودیت ۱۴۰۴/۰۱/۰۱ تا ۱۴۰۴/۰۶/۳۱</label>
+        <input id="demo-limited" class="ui" placeholder="فقط بازه‌ی مجاز">
+      </div>
+      <button class="ui" data-act="get-limited">خواندن مقدار</button>
+    </div>
+    <div class="out" id="out-limited">روزهای بیرون بازه و روزهای غیرفعال‌شده قابل کلیک نیستند.</div>
+
+    <div class="demo-row" style="margin-top:18px">
+      <div class="field-group">
+        <label>غیرفعال کردن تعطیلات رسمی و جمعه‌ها</label>
+        <input id="demo-noholi" class="ui" placeholder="تعطیلات قابل انتخاب نیستند">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۵</span> تعطیلات: ورود با فایل JSON</h2>
+    <p class="desc">
+      کافی است یک فایل JSON با ساختار زیر بسازید و آدرس آن را به گزینه‌ی <code>holidayJson</code> بدهید
+      (یا خود آبجکت را با <code>holidays</code> بدهید). روزهای تعطیل قرمز و مناسبت‌ها در فهرست پایین تقویم نمایش داده می‌شوند.
+      فایل نمونه در همین پوشه با نام <code>holidays-sample.json</code> قرار دارد.
+    </p>
+<pre>{
+  "weekends": { "jalali": [5], "gregorian": [0, 6] },
+  "jalali": {
+    "1405/01/01": "جشن نوروز",
+    "1405/01/13": { "title": "روز طبیعت", "type": "holiday" }
+  },
+  "gregorian": { "2026-12-25": "کریسمس" }
+}
+
+// و در جاوااسکریپت (خواندن از فایل):
+AriaDatePicker.create('#demo-json', {
+  calendar: 'both',
+  holidayJson: 'holidays-sample.json',
+  showHolidayList: true,
+  showExportButton: true      // دکمه‌ی JSON برای ذخیره‌ی داده‌های دانلودشده
+});
+
+// یا معرفی مستقیم داده‌ها بدون فایل:
+AriaDatePicker.create('#demo-json', {
+  holidays: { jalali: { '1405/01/01': 'جشن نوروز' } }
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تعطیلات از فایل <code>holidays-sample.json</code></label>
+        <input id="demo-json" class="ui" placeholder="تعطیلات رسمی قرمز رنگ">
+      </div>
+      <button class="ui" data-act="load-json-file">بارگذاری از فایل JSON</button>
+      <button class="ui" data-act="holi-json">نمایش فهرست تعطیلات</button>
+      <button class="ui" data-act="dump-json">دانلود فایل JSON</button>
+    </div>
+    <div class="out" id="out-json">تعطیلات رسمی ثابت بارگذاری شده‌اند (نسخه‌ی درون‌صفحه‌ای همان داده‌های فایل نمونه است).</div>
+    <div class="note">
+      خواندن فایل JSON با <code>fetch</code> انجام می‌شود؛ بنابراین اگر صفحه را مستقیم از روی فایل
+      (<code>file://</code>) باز کرده‌اید، مرورگر اجازه‌ی خواندن فایل را نمی‌دهد. صفحه را با یک وب‌سرور ساده اجرا کنید:
+      <code>python -m http.server 8000</code> یا <code>npx serve</code> و سپس آدرس <code>http://localhost:8000</code> را باز کنید.
+      در همین حالت‌که فایل را از روی دیسک باز کرده‌اید، دمو با داده‌ی درون‌صفحه‌ای کار می‌کند و دکمه‌ی «بارگذاری از فایل JSON» پیام خطای مدیریت‌شده نشان می‌دهد.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۶</span> کش مرورگر و دریافت اختیاری/manual از اینترنت</h2>
+    <p class="desc">
+      به‌صورت پیش‌فرض <b>هیچ دانلود خودکاری انجام نمی‌شود</b>؛ تعطیلات فقط از فایل JSON محلی
+      (<code>holidayJson</code>) یا آبجکت <code>holidays</code> خوانده می‌شود. اگر خواستید،
+      می‌توانید با متد <code>fetchHolidays()</code> به‌صورت دستی از اینترنت دریافت کنید و نتیجه در
+      حافظه‌ی مرورگر (localStorage) ذخیره یا در فایل JSON دانلود شود.
+    </p>
+<pre>// حالت پیش‌فرض: فقط از فایل محلی (بدون هیچ درخواست شبکه‌ای)
+AriaDatePicker.create('#demo-online', {
+  calendar: 'both',
+  holidayJson: 'holidays-sample.json'
+});
+
+// دریافت دستی و اختیاری از اینترنت با کلیک کاربر
+const dp = AriaDatePicker.get(document.querySelector('#demo-online'));
+dp.fetchHolidays();                     // Promise — فقط زمانی که خودتان بخواهید
+dp.downloadHolidays('holidays.json');   // ذخیره‌ی نتیجه در فایل
+dp.clearHolidays();                     // پاک کردن کش</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>کش مرورگر + دریافت دستی</label>
+        <input id="demo-online" class="ui" placeholder="تعطیلات از فایل محلی">
+      </div>
+      <button class="ui" data-act="fetch-online">دریافت دستی از اینترنت</button>
+      <button class="ui" data-act="dump-online">ذخیره در فایل JSON</button>
+      <button class="ui" data-act="clear-cache">پاک کردن کش</button>
+    </div>
+    <div class="out" id="out-online">حالت پیش‌فرض: فقط داده‌ی فایل محلی استفاده می‌شود؛ هیچ درخواست خودکاری به اینترنت ارسال نمی‌شود.</div>
+    <div class="note">
+      سرویس‌های پیش‌فرض هنگام فراخوانی دستی: <code>holidayapi.ir</code>، <code>persiancalapi.ir</code>، <code>api.keybit.ir</code> (شمسی) و
+      <code>holidayapi.ir</code> / <code>date.nager.at</code> (میلادی)؛ اگر سرویس اول پاسخ ندهد سرویس بعدی امتحان می‌شود.
+      می‌توانید سرویس دلخواه خود را با <code>AriaDatePicker.addProvider()</code> اضافه کنید.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳.۱</span> رویداد شخصی با انتخاب روز (Day Events)</h2>
+    <p class="desc">
+      می‌توانید برای هر روز یا گروهی از روزها، تابع دلخواه خودتان را تعریف کنید؛ با کلیک روی آن روز
+      تابع اجرا می‌شود. <b>ورودی‌های تابع را خودتان تعیین می‌کنید</b>: یا حالت پیش‌فرض
+      <code>handler(info, picker)</code>، یا با <code>args</code> ورودی‌های دلخواه
+      (جای‌نگهدارهای <code>'$date'</code>، <code>'$text'</code>، <code>'$range'</code>،
+      <code>'$picker'</code>، <code>'$info'</code>، <code>'$jalali'</code>، <code>'$gregorian'</code>).
+    </p>
+<pre>var dp = AriaDatePicker.create('#demo-events', {
+  calendar: 'jalali',
+  dayEvents: [
+    // ۱) روزهای مشخص، با ورودی پیش‌فرض (info, picker)
+    { days: ['1405/01/05', '1405/01/07'], title: 'جلسه‌ی کاری',
+      handler: function (info, picker) { alert('جلسه در ' + info.text); } },
+
+    // ۲) روزهای مشخص، با ورودی‌های دلخواه کاربر
+    { days: ['1405/02/01'], title: 'ارسال پیامک', args: ['$date', 'sms', 100],
+      handler: function (dateObj, type, price) { console.log(type, dateObj.gregorian.text, price); } },
+
+    // ۳) همه‌ی جمعه‌ها (0=یکشنبه … 6=شنبه)
+    { weekdays: [5], title: 'تعطیل هفتگی', className: 'my-friday',
+      handler: function (info) { console.log('جمعه:', info.text); } },
+
+    // ۴) یک بازه، فقط یک‌بار
+    { range: ['1405/03/01', '1405/03/10'], title: 'سفر', once: true,
+      handler: function (info) { console.log('سفر در', info.text); } },
+
+    // ۵) رویدادهای مبتنی بر طول بازه‌ی انتخابی
+    { rangeDays: { min: 3, max: 7 }, title: 'بازه‌ی کوتاه',
+      handler: function (info) { alert('طول بازه: ' + info.range.lengthDays + ' روز'); } }
+  ]
+});
+
+dp.setDayEvents({...});   dp.addDayEvent({...});   dp.removeDayEvent('dayEvent1');
+dp.getDayEvents();        dp.triggerDayEvents('1405/01/05');   dp.getLastDayEvent();</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ با رویدادهای شخصی</label>
+        <input id="demo-events" class="ui" placeholder="روزهای دارای رویداد نشانگر آبی دارند">
+      </div>
+      <button class="ui" data-act="evt-add">افزودن رویداد به ۵ روزِ آینده</button>
+      <button class="ui" data-act="evt-list">فهرست رویدادها</button>
+      <button class="ui" data-act="evt-clear">پاک کردن رویدادها</button>
+    </div>
+    <div class="out" id="out-events">لاگ رویدادها: هنوز رویدادی اجرا نشده است.</div>
+    <div class="note">
+      رویداد «سفر» تا اولین اجرا فعال است (<code>once: true</code>)، رویدادهای روزهای مشخص با نشانگر آبی و
+      کلاس دلخواه <code>className</code> مشخص می‌شوند و با <code>disabled: true</code> می‌توان روزی را
+      غیرقابل انتخاب کرد. رویداد سراسری <code>adp:dayevent</code> هم روی عنصر هدف ارسال می‌شود.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳.۲</span> بسته‌شدن یا بازماندن پنجره پس از انتخاب</h2>
+    <p class="desc">
+      با <code>closeOnSelect</code> تعیین می‌کنید پنل پس از انتخاب تاریخ بسته شود یا باز بماند
+      (برای انتخاب‌های پی‌درپی). در حالت بازه هم <code>closeOnSelectRange</code> همین کار را
+      برای پایان بازه انجام می‌دهد.
+    </p>
+<pre>AriaDatePicker.create('#demo-close', {
+  calendar: 'jalali',
+  closeOnSelect: false,        // پنل باز می‌ماند
+  closeOnSelect: true,         // پنل بسته می‌شود (پیش‌فرض)
+
+  range: true,
+  closeOnSelectRange: false    // در حالت بازه پس از انتخاب تاریخ دوم هم باز بماند
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ (پنل را باز بگذارید و چند تاریخ کلیک کنید)</label>
+        <input id="demo-close" class="ui" placeholder="بسته به تنظیمات">
+      </div>
+      <div class="field-group">
+        <label>پس از انتخاب</label>
+        <select class="ui" id="close-mode">
+          <option value="close">بسته شود</option>
+          <option value="keep">باز بماند</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>حالت انتخاب</label>
+        <select class="ui" id="close-range">
+          <option value="single">تک‌تاریخی</option>
+          <option value="range">بازه (از — تا)</option>
+        </select>
+      </div>
+    </div>
+    <div class="out" id="out-close">برای دیدن تفاوت، گزینه‌ی «باز بماند» را انتخاب و روی چند روز کلیک کنید.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۳.۳</span> سوییچ تقویم با یک دکمه</h2>
+    <p class="desc">
+      با <code>switchToCalendar: 'gregorian'</code> یک دکمه‌ی سوییچ بالای پنل اضافه می‌شود. در حالت پیش‌فرض
+      (<code>switchMode: 'both'</code>) با یک کلیک، تقویم میلادی <b>هم‌زمان</b> در کنار شمسی نمایش داده می‌شود و با
+      کلیک دوباره پنهان می‌شود. با <code>switchMode: 'swap'</code> تقویم کاملاً تعویض می‌شود
+      (شمسی ↔ میلادی). این کار با متدهای <code>switchCalendar()</code>، <code>showGregorian()</code> و
+      <code>hideGregorian()</code> هم قابل انجام است.
+    </p>
+<pre>AriaDatePicker.create('#demo-switch', {
+  calendar: 'jalali',
+  switchToCalendar: 'gregorian',   // دکمه‌ی سوییچ به میلادی
+  switchMode: 'both',              // 'both' = نمایش هم‌زمان | 'swap' = تعویض کامل
+  calendarSwitch: true,            // نمایش دکمه‌ها (پیش‌فرض: خودکار)
+  onCalendarChange: function (info) { console.log(info.calendars); }
+});
+
+// با متدها
+dp.switchCalendar('gregorian'); dp.showGregorian(); dp.hideGregorian(); dp.showBothCalendars();</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ (دکمه‌ی سوییچ بالای پنل)</label>
+        <input id="demo-switch" class="ui">
+      </div>
+      <div class="field-group">
+        <label>حالت سوییچ</label>
+        <select class="ui" id="switch-mode">
+          <option value="both">نمایش هم‌زمان (both)</option>
+          <option value="swap">تعویض کامل (swap)</option>
+        </select>
+      </div>
+      <button class="ui" data-act="sw-show">نمایش میلادی</button>
+      <button class="ui" data-act="sw-hide">پنهان کردن میلادی</button>
+    </div>
+    <div class="out" id="out-switch">پنل در ابتدا فقط شمسی است؛ با دکمه‌ی «میلادی» در بالای پنل، هم‌زمان نمایش داده می‌شود.</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۷</span> نمایش همیشه‌باز (inline)، تم تاریک و رنگ سفارشی</h2>
+<pre>AriaDatePicker.create('#demo-inline', {
+  calendar: 'jalali',
+  inline: true,
+  theme: 'dark',
+  accent: '#7c3aed',
+  size: 'md',
+  showHolidayList: false
+});</pre>
+    <div class="demo-row" style="margin-top:16px; align-items:flex-start">
+      <div class="field-group">
+        <label>پنل همیشه‌باز</label>
+        <div id="demo-inline"></div>
+      </div>
+      <div class="field-group">
+        <label>فیلد ساخته‌شده روی div</label>
+        <div id="demo-div"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۸</span> استفاده در فرم‌ها (ارسال مقدار به سرور)</h2>
+    <p class="desc">اگر هدف یک <code>div</code> باشد، می‌توانید با <code>name</code> یک فیلد مخفی برای ارسال در فرم بسازید؛ مقدار آن تاریخ میلادی ISO در قالب <code>YYYY-MM-DD</code> است.</p>
+<pre>// div به‌عنوان فیلد + فیلد مخفی برای فرم
+AriaDatePicker.create('#demo-form-field', {
+  calendar: 'jalali', name: 'trip_date', range: false
+});
+// &lt;input type="hidden" name="trip_date" value="2026-10-11"&gt;</pre>
+    <form class="demo-row" style="margin-top:16px" onsubmit="return false">
+      <div class="field-group">
+        <label>تاریخ مرخصی</label>
+        <div id="demo-form-field"></div>
+      </div>
+      <button class="ui" data-act="show-form-value">مقدار فیلد مخفی</button>
+    </form>
+    <div class="out" id="out-form">—</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۹</span> انتخاب ساعت (Date + Time)</h2>
+<pre>AriaDatePicker.create('#demo-time', {
+  calendar: 'jalali',
+  timePicker: true,
+  timeStep: 5,
+  showSeconds: false,
+  format: 'YYYY/MM/DD [ساعت] HH:mm'
+});</pre>
+    <div class="demo-row" style="margin-top:16px">
+      <div class="field-group">
+        <label>تاریخ و ساعت جلسه</label>
+        <input id="demo-time" class="ui">
+      </div>
+    </div>
+    <div class="out" id="out-time">—</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱۰</span> جدول گزینه‌های مهم</h2>
+    <table>
+      <thead><tr><th>گزینه</th><th>نوع / مقدارها</th><th>توضیح</th></tr></thead>
+      <tbody>
+        <tr><td><code>calendar</code></td><td>'jalali' | 'gregorian' | 'both'</td><td>انتخاب تقویم (پیش‌فرض: شمسی)</td></tr>
+        <tr><td><code>switchToCalendar</code> / <code>switchMode</code> / <code>calendarSwitch</code></td><td>'gregorian' | 'both' | 'swap' | bool</td><td>دکمه‌ی سوییچ تقویم: نمایش هم‌زمان یا تعویض کامل (با یک کلیک)</td></tr>
+        <tr><td><code>range</code></td><td>true | false</td><td>فعال‌سازی حالت «از تاریخ تا تاریخ»</td></tr>
+        <tr><td><code>selectMode</code></td><td>'single' | 'range'</td><td>مترادف <code>range</code></td></tr>
+        <tr><td><code>limits</code></td><td>شیء</td><td><code>{ mode, from, to, min, max, minDays, maxDays }</code></td></tr>
+        <tr><td><code>limits.mode</code></td><td>'free' | 'range' | 'before' | 'after'</td><td>آزاد / محدود به بازه / قبل از تاریخ / بعد از تاریخ</td></tr>
+        <tr><td><code>initialDate</code></td><td>'today' | 'now' | تاریخ | 'selected'</td><td>نمای شروع پنل</td></tr>
+        <tr><td><code>defaultDate</code> / <code>defaultRange</code></td><td>تاریخ / بازه</td><td>مقدار پیش‌فرض کادر</td></tr>
+        <tr><td><code>holidays</code> / <code>holidayJson</code></td><td>آبجکت / آدرس فایل</td><td>معرفی تعطیلات توسط کاربر</td></tr>
+        <tr><td><code>holidayJson</code> / <code>holidays</code></td><td>آدرس فایل / آبجکت</td><td>منبع تعطیلات؛ فقط محلی (هیچ دانلود خودکاری انجام نمی‌شود)</td></tr>
+        <tr><td><code>dayEvents</code> / <code>onDayEvent</code></td><td>شیء یا آرایه / تابع</td><td>رویداد شخصی روی روزها با ورودی‌های دلخواه (نگاه کنید به بخش ۳+)</td></tr>
+        <tr><td><code>closeOnSelect</code> / <code>closeOnSelectRange</code></td><td>true | false</td><td>بسته‌شدن یا بازماندن پنجره پس از انتخاب تاریخ / پایان بازه</td></tr>
+        <tr><td><code>onCalendarChange</code></td><td>تابع</td><td>تغییر تقویم با دکمه‌ی سوییچ</td></tr>
+        <tr><td><code>weekends</code></td><td>{ jalali: [5], gregorian: [0,6] }</td><td>روزهای تعطیل هفتگی (0=یکشنبه … 6=شنبه)</td></tr>
+        <tr><td><code>holidayStyle</code></td><td>'red' | 'dot' | 'both' | 'none'</td><td>نحوه‌ی نمایش تعطیلات</td></tr>
+        <tr><td><code>disableHolidays</code> / <code>disableWeekends</code></td><td>true | false</td><td>غیرقابل انتخاب شدن تعطیلات / جمعه‌ها</td></tr>
+        <tr><td><code>disabledDays</code> / <code>disabledDates</code> / <code>disabledRanges</code></td><td>آرایه</td><td>غیرفعال‌سازی روزهای هفته، تاریخ‌ها یا بازه‌ها</td></tr>
+        <tr><td><code>blackout</code></td><td>تابع <code>(date) =&gt; boolean</code></td><td>منطق دلخواه برای غیرفعال کردن روزها</td></tr>
+        <tr><td><code>format</code></td><td>'YYYY/MM/DD' یا شیء به تفکیک تقویم</td><td>قالب نمایش تاریخ (توکن‌ها: YYYY، MM، DD، MMMM، dddd، HH، mm، ss)</td></tr>
+        <tr><td><code>persianDigits</code></td><td>'auto' | true | false | { jalali: bool, gregorian: bool }</td><td>ارقام فارسی/لاتین برای هر دو تقویم (قابل تغییر در زمان اجرا)</td></tr>
+        <tr><td><code>dualDigits</code></td><td>true | false</td><td>نمایش هم‌زمان دو شکل عدد در خانه‌های روز</td></tr>
+        <tr><td><code>dualDisplay</code></td><td>true | false</td><td>نمایش هر دو تقویم در کادر ورودی</td></tr>
+        <tr><td><code>monthsPerPanel</code></td><td>1 | 2 | 3</td><td>تعداد ماه نمایش‌داده‌شده در هر پنل</td></tr>
+        <tr><td><code>timePicker</code> / <code>timeStep</code> / <code>showSeconds</code></td><td>bool / عدد / bool</td><td>انتخاب ساعت و دقیقه</td></tr>
+        <tr><td><code>confirmMode</code></td><td>true | false</td><td>ثبت مقدار فقط با دکمه‌ی «تأیید»</td></tr>
+        <tr><td><code>inline</code></td><td>true | false</td><td>نمایش همیشه‌باز بدون پاپ‌آپ</td></tr>
+        <tr><td><code>mobileModal</code></td><td>true | false</td><td>نمایش مودال تمام‌صفحه در موبایل</td></tr>
+        <tr><td><code>theme</code> / <code>size</code> / <code>accent</code></td><td>'light'|'dark' / 'sm'|'md'|'lg' / رنگ</td><td>ظاهر</td></tr>
+        <tr><td><code>prefix</code></td><td>پیش‌فرض 'adp-'</td><td>تغییر پیشوند کلاس‌ها برای یونیک‌سازی بیشتر</td></tr>
+        <tr><td><code>onChange</code>, <code>onSelect</code>, <code>onOpen</code>, <code>onClose</code>, <code>onMonthChange</code>, <code>onHolidaysLoaded</code>, <code>onError</code></td><td>تابع</td><td>رویدادها؛ همچنین رویداد DOM با نام <code>adp:change</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱۱</span> متدهای عمومی (API)</h2>
+<pre>const dp = AriaDatePicker.create('#el', { calendar: 'jalali', range: true });
+
+dp.open(); dp.close(); dp.toggle();     // باز/بسته کردن
+dp.getDate();                           // تاریخ انتخاب‌شده (شیء کامل + معادل دو تقویم)
+dp.getRange(); dp.getRangeText();       // بازه‌ی انتخاب‌شده
+dp.getValue(); dp.getText();            // { from, to, text, jalali, gregorian }
+dp.getGregorianDate();                  // Date جاوااسکریپت
+dp.getJalali(); dp.getGregorian();      // معادل شمسی/میلادی
+dp.setDate('1405/01/01');               // تنظیم مقدار
+dp.setRange('1405/01/01', '1405/01/13');// تنظیم بازه
+dp.clear(); dp.goToday();               // پاک کردن / رفتن به امروز
+dp.setLimits({ mode: 'range', from: '1405/01/01', to: '1405/06/31' });
+dp.setCalendar('gregorian'); dp.setOptions({ theme: 'dark' });
+// رویدادهای شخصی روزها
+dp.setDayEvents({ days: ['1405/01/05'], handler: function (info, picker) {...} });
+dp.addDayEvent({ weekdays: [5], args: ['$date', 'sms'], handler: fn });   // ورودی‌های دلخواه
+dp.removeDayEvent('dayEvent1');  dp.getDayEvents();  dp.triggerDayEvents('1405/01/05');
+dp.getLastDayEvent();                   // اطلاعات آخرین رویداد اجراشده
+
+// سوییچ تقویم
+dp.switchCalendar('gregorian');         // یک کلیک: نمایش هم‌زمان / تعویض کامل
+dp.showGregorian(); dp.hideGregorian(); dp.showBothCalendars();
+dp.setSwitchMode('swap');               // یا 'both'
+dp.getPrimaryCalendar(); dp.setPrimaryCalendar('gregorian');
+dp.getAvailableCalendars(); dp.isCalendarActive('gregorian');
+
+dp.getHolidays(1405, 'jalali');         // فهرست تعطیلات یک سال
+dp.loadHolidays('holidays.json');       // بارگذاری فایل تعطیلات
+dp.fetchHolidays(true);                 // دریافت مجدد از اینترنت
+dp.downloadHolidays('holidays.json');   // ذخیره‌ی تعطیلات در فایل JSON
+dp.exportHolidays();                    // خروجی JSON به‌صورت رشته
+dp.destroy();                           // حذف کامل
+
+// توابع کمکی مستقل
+AriaDatePicker.format('1405/01/01', 'dddd D MMMM YYYY', 'jalali'); // جمعه ۱ فروردین ۱۴۰۵
+AriaDatePicker.convert('1405/01/01', 'jalali', 'gregorian');       // { y: 2026, m: 3, d: 21 }
+AriaDatePicker.toDate('1405/01/01', 'jalali');                     // Date
+AriaDatePicker.parse('۱۴۰۵/۰۱/۰۱');                                 // { calendar, y, m, d, jdn }</pre>
+    <div class="note ok">
+      همه‌ی متدهای بالا در این صفحه فعال هستند؛ می‌توانید در کنسول مرورگر امتحان کنید:
+      <code>AriaDatePicker.instances</code> فهرست همه‌ی نمونه‌های فعال را برمی‌گرداند.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱۲</span> کیبورد و دسترسی‌پذیری</h2>
+    <ul>
+      <li><span class="kbd">Enter</span> / <span class="kbd">Space</span> / <span class="kbd">↓</span> باز کردن پنل و انتخاب روز</li>
+      <li><span class="kbd">←</span> <span class="kbd">→</span> <span class="kbd">↑</span> <span class="kbd">↓</span> حرکت بین روزها (متناسب با جهت تقویم شمسی)</li>
+      <li><span class="kbd">Page Up</span> / <span class="kbd">Page Down</span> ماه قبل/بعد — همراه <span class="kbd">Shift</span> سال قبل/بعد</li>
+      <li><span class="kbd">Home</span> / <span class="kbd">End</span> ابتدا و انتهای هفته</li>
+      <li><span class="kbd">Esc</span> بستن پنل (در حالت تأییدی، بازگشت به مقدار قبلی)</li>
+      <li>ساختار ARIA کامل: <code>role="dialog"</code>، <code>role="grid"</code>، <code>aria-selected</code>، <code>aria-label</code> فارسی برای هر روز</li>
+    </ul>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="card">
+    <h2><span class="num">۱۳</span> جلوگیری از تداخل با برنامه‌ی اصلی</h2>
+    <ul>
+      <li>همه‌ی کلاس‌های CSS با پیشوند <code>adp-</code> ساخته می‌شوند (مثلاً <code>.adp-day</code>، <code>.adp-popup</code>) و فقط روی عناصری که خودِ دیت‌پیکر می‌سازد اعمال می‌شوند.</li>
+      <li>متغیرهای رنگ به‌صورت CSS Variable با پیشوند <code>--adp-</code> تعریف شده‌اند و به بیرون سرریز نمی‌کنند.</li>
+      <li>دیت‌پیکر هیچ استایل سراسری (global) برای تگ‌هایی مثل <code>body</code>، <code>input</code> یا <code>button</code> تعریف نمی‌کند.</li>
+      <li>در صورت نیاز، با گزینه‌ی <code>prefix: 'my-picker-'</code> می‌توانید پیشوند را هم کاملاً اختصاصی کنید.</li>
+      <li>کل کتابخانه داخل یک IIFE بسته است و فقط یک شیء سراسری به نام <code>AriaDatePicker</code> می‌سازد (سازگار با AMD و CommonJS).</li>
+    </ul>
+  </section>
+
+  <footer>
+    Aria Date Picker — نسخه ۱.۱.۰ | مجوز GPL-3.0 | ساخته‌شده با جاوااسکریپت خالص و بدون وابستگی
+  </footer>
+</div>
+
+<script src="aria-datepicker.js"></script>
+<script>
+(function () {
+  'use strict';
+  var ADP = window.AriaDatePicker;
+  var $ = function (s) { return document.querySelector(s); };
+  var out = function (id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; };
+  var esc = ADP.utils.escapeHtml;
+  var fa = function (v) { return ADP.utils.toFaDigits(v); };
+
+  /* همان محتوای فایل holidays-sample.json؛ برای اینکه دمو حتی در حالت
+     باز کردن مستقیم فایل (file://) هم کار کند، درون صفحه قرار گرفته است. */
+  var SAMPLE_HOLIDAYS = {
+    weekends: { jalali: [5], gregorian: [0, 6] },
+    jalali: {
+      '1404/01/01': 'جشن نوروز', '1404/01/02': 'عید نوروز', '1404/01/03': 'عید نوروز', '1404/01/04': 'عید نوروز',
+      '1404/01/12': 'روز جمهوری اسلامی', '1404/01/13': 'روز طبیعت (سیزده‌بدر)',
+      '1404/03/14': 'رحلت امام خمینی', '1404/03/15': 'قیام ۱۵ خرداد',
+      '1404/11/22': 'پیروزی انقلاب اسلامی', '1404/12/29': 'روز ملی شدن صنعت نفت',
+      '1405/01/01': 'جشن نوروز', '1405/01/02': 'عید نوروز', '1405/01/03': 'عید نوروز', '1405/01/04': 'عید نوروز',
+      '1405/01/12': 'روز جمهوری اسلامی', '1405/01/13': 'روز طبیعت (سیزده‌بدر)',
+      '1405/03/14': 'رحلت امام خمینی', '1405/03/15': 'قیام ۱۵ خرداد',
+      '1405/11/22': 'پیروزی انقلاب اسلامی', '1405/12/29': 'روز ملی شدن صنعت نفت',
+      '1405/10/01': { title: 'مناسبت نمونه (بدون تعطیلی)', type: 'event' }
+    },
+    gregorian: {
+      '2025/01/01': 'آغاز سال میلادی', '2025/12/25': 'کریسمس',
+      '2026/01/01': 'آغاز سال میلادی', '2026/05/01': 'روز جهانی کارگر', '2026/12/25': 'کریسمس'
+    }
+  };
+
+  /* ---------- ۰) راه‌اندازی پایه ---------- */
+  var basic = ADP.create('#demo-basic', {
+    calendar: 'jalali',
+    initialDate: 'today',
+    onChange: function (v) {
+      out('out-basic', v.from
+        ? '<b>' + esc(v.from.text) + '</b> — ' + esc(v.from.text ? v.from.gregorian.text : '') + ' (میلادی) | روز هفته: ' + esc(ADP.format(v.from, 'dddd', 'jalali'))
+        : 'مقداری انتخاب نشده است.');
+    }
+  });
+
+  /* ---------- ۱) دو تقویمی ---------- */
+  var both = ADP.create('#demo-both', {
+    calendar: 'both',
+    primaryCalendar: 'jalali',
+    initialDate: 'today',
+    defaultDate: '1404/01/01',
+    onChange: function (v) {
+      out('out-both', 'شمسی: <b>' + esc(v.jalali.text) + '</b> — میلادی: <b>' + esc(v.gregorian.text) + '</b>' +
+        ' (تعطیل: ' + (v.from.isHoliday ? 'بله — ' + esc(v.from.holidayTitle) : 'خیر') + ')');
+    }
+  });
+
+  ADP.create('#demo-greg', {
+    calendar: 'gregorian',
+    format: 'MM/DD/YYYY',
+    initialDate: 'today'
+  });
+
+  var todayPicker = ADP.create('#demo-today', {
+    calendar: 'jalali',
+    initialDate: 'now',      // تاریخ و ساعت آنی
+    defaultDate: new Date()  // مقدار پیش‌فرض = امروز
+  });
+
+  /* ---------- ۲) مقدار پیش‌فرض و نمای شروع ---------- */
+  var defaulted = ADP.create('#demo-default', {
+    calendar: 'jalali',
+    initialDate: '1405/01/01',
+    defaultDate: '1403/06/15',
+    placeholder: 'تاریخ قرارداد'
+  });
+
+  /* ---------- ۱+) ارقام فارسی/لاتین ---------- */
+  var digitsPicker = ADP.create('#demo-digits', {
+    calendar: 'both',
+    persianDigits: 'auto',
+    defaultDate: '1405/01/01',
+    onChange: function (v) {
+      out('out-digits', 'مقدار ثبت‌شده: <b>' + esc(v.text) + '</b> — شمسی: <b>' + esc(v.jalali.text) +
+        '</b> | میلادی: <b>' + esc(v.gregorian.text) + '</b>');
+    }
+  });
+  var digitsModes = {
+    auto: 'auto',
+    fa: true,
+    en: false,
+    mix: { jalali: true, gregorian: false },
+    mix2: { jalali: false, gregorian: true }
+  };
+  document.getElementById('digits-mode').addEventListener('change', function () {
+    var mode = this.value;
+    digitsPicker.setOptions({ persianDigits: digitsModes[mode] });
+    out('out-digits', 'حالت فعلی: <b>' + esc(this.options[this.selectedIndex].text) + '</b> — کادر را باز کنید تا تفاوت را ببینید.');
+  });
+  document.getElementById('digits-dual').addEventListener('change', function () {
+    digitsPicker.setOptions({ dualDigits: this.value === 'on' });
+  });
+
+  /* ---------- ۳) حالت بازه ---------- */
+  var rangePicker = ADP.create('#demo-range', {
+    calendar: 'jalali',
+    range: true,
+    monthsPerPanel: 2,
+    closeOnSelect: false,
+    showConfirmButton: true,
+    onChange: function (v) {
+      if (!v.from) { out('out-range', 'هنوز بازه‌ای انتخاب نشده است.'); return; }
+      out('out-range', 'از <b>' + esc(v.from.text) + '</b> تا <b>' + (v.to ? esc(v.to.text) : '…') + '</b>' +
+        (v.to ? ' — طول بازه: ' + fa(Math.abs(v.to.jdn - v.from.jdn) + 1) + ' روز' : ''));
+    }
+  });
+
+  /* ---------- ۴) محدودیت‌ها ---------- */
+  var limited = ADP.create('#demo-limited', {
+    calendar: 'jalali',
+    range: true,
+    initialDate: '1404/01/01',
+    limits: { mode: 'range', from: '1404/01/01', to: '1404/06/31', minDays: 2, maxDays: 20 },
+    disabledDates: ['1404/01/13', '1404/03/14'],
+    onChange: function (v) {
+      out('out-limited', v.from
+        ? 'بازه‌ی مجاز انتخاب شد: <b>' + esc(v.from.text) + '</b>' + (v.to ? ' تا <b>' + esc(v.to.text) + '</b>' : '')
+        : 'مقداری انتخاب نشده است.');
+    }
+  });
+
+  ADP.create('#demo-noholi', {
+    calendar: 'both',
+    disableHolidays: true,       // تعطیلات رسمی قابل انتخاب نیستند
+    disableWeekends: false,      // ولی جمعه‌ها آزادند
+    holidays: SAMPLE_HOLIDAYS,
+    showHolidayList: true
+  });
+
+  /* ---------- ۵) تعطیلات از فایل JSON ---------- */
+  var jsonPicker = ADP.create('#demo-json', {
+    calendar: 'both',
+    holidays: SAMPLE_HOLIDAYS,      // در پروژه‌ی شما: holidayJson: 'holidays-sample.json'
+    showHolidayList: true,
+    showExportButton: true
+  });
+
+  /* ---------- ۶) تعطیلات از فایل محلی + دریافت دستی اختیاری ---------- */
+  var online = ADP.create('#demo-online', {
+    calendar: 'both',
+    holidays: SAMPLE_HOLIDAYS,      // حالت پیش‌فرض: فقط داده‌ی محلی، بدون درخواست شبکه
+    showExportButton: true,
+    onHolidaysLoaded: function (info) {
+      out('out-online', 'منبع داده: <b>' + esc(info.source) + '</b>' +
+        (info.added ? ' (' + fa(info.added) + ' رکورد)' : ''));
+    },
+    onLog: function (msg) { if (window.console) console.log('[ADP]', msg); }
+  });
+
+  /* ---------- ۳+) رویدادهای شخصی روزها ---------- */
+  var eventLog = [];
+  function pushLog(line) {
+    eventLog.unshift(line);
+    if (eventLog.length > 6) eventLog.pop();
+    out('out-events', 'لاگ رویدادها:<br>' + eventLog.map(function (l) { return '• ' + l; }).join('<br>'));
+  }
+  var evtPicker = ADP.create('#demo-events', {
+    calendar: 'jalali',
+    closeOnSelect: false,          // پنل باز می‌ماند تا چند رویداد پشت‌سرهم امتحان شود
+    dayEvents: [
+      {
+        days: ['1405/01/05', '1405/01/07'],
+        title: 'جلسه‌ی کاری',
+        handler: function (info) {
+          pushLog('جلسه در <b>' + esc(info.text) + '</b> (میلادی: ' + esc(info.gregorian.text) + ')');
+        }
+      },
+      {
+        days: ['1405/02/01'],
+        title: 'ارسال پیامک',
+        args: ['$date', 'sms', 100],
+        handler: function (dateObj, type, price) {
+          pushLog('تابع با ورودی دلخواه: نوع=<b>' + type + '</b>، مبلغ=<b>' + fa(price) +
+            '</b>، تاریخ=<b>' + esc(dateObj.gregorian.text) + '</b>');
+        }
+      },
+      {
+        weekdays: [5],               // جمعه‌ها (0=یکشنبه … 6=شنبه)
+        title: 'تعطیل هفتگی',
+        className: 'my-friday-event',
+        handler: function (info) {
+          pushLog('جمعه انتخاب شد: ' + esc(info.text) + ' — یک‌بار اجرا می‌شود و دیگر تکرار نمی‌شود');
+        },
+        once: true
+      },
+      {
+        range: ['1405/03/01', '1405/03/10'],
+        title: 'بازه‌ی سفر',
+        handler: function (info) {
+          pushLog('روز داخل بازه‌ی سفر: <b>' + esc(info.text) + '</b>');
+        }
+      },
+      {
+        days: ['1405/01/13'],
+        disabled: true,
+        title: 'غیرقابل انتخاب'
+      }
+    ],
+    onDayEvent: function (info) {
+      if (window.console) console.log('[adp:dayevent]', info);
+    }
+  });
+
+  /* ---------- ۳++) بسته‌شدن یا بازماندن پنل ---------- */
+  var closePicker = ADP.create('#demo-close', {
+    calendar: 'jalali',
+    closeOnSelect: true,
+    closeOnSelectRange: true,
+    onChange: function (v) {
+      out('out-close', v.from ? 'مقدار: <b>' + esc(v.text) + '</b>' : 'مقدار پاک شد.');
+    }
+  });
+  function rebuildClosePicker() {
+    var keep = document.getElementById('close-mode').value === 'keep';
+    var rangeMode = document.getElementById('close-range').value === 'range';
+    var prev = closePicker.getText();
+    closePicker.destroy();
+    closePicker = ADP.create('#demo-close', {
+      calendar: 'jalali',
+      range: rangeMode,
+      closeOnSelect: !keep,
+      closeOnSelectRange: !keep,
+      defaultRange: rangeMode && prev ? null : null,
+      onChange: function (v) {
+        out('out-close', v.from ? 'مقدار: <b>' + esc(v.text) + '</b>' : 'مقدار پاک شد.');
+      }
+    });
+    out('out-close', 'حالت فعلی: ' + (keep ? '<b>پنل باز می‌ماند</b>' : '<b>پنل بسته می‌شود</b>') +
+      ' — ' + (rangeMode ? 'انتخاب بازه' : 'انتخاب تک‌تاریخی') + '. کادر را باز کنید.');
+  }
+  document.getElementById('close-mode').addEventListener('change', rebuildClosePicker);
+  document.getElementById('close-range').addEventListener('change', rebuildClosePicker);
+
+  /* ---------- ۳+++) سوییچ تقویم با یک دکمه ---------- */
+  var switchPicker = ADP.create('#demo-switch', {
+    calendar: 'jalali',
+    switchToCalendar: 'gregorian',
+    switchMode: 'both',
+    initialDate: 'today',
+    onCalendarChange: function (info) {
+      out('out-switch', 'تقویم‌های فعال: <b>' + info.calendars.join(' + ') + '</b> — تقویم اصلی: <b>' + info.primary + '</b>');
+    }
+  });
+  document.getElementById('switch-mode').addEventListener('change', function () {
+    switchPicker.setSwitchMode(this.value);
+    out('out-switch', this.value === 'swap'
+      ? 'حالت «تعویض کامل»: با دکمه‌ی بالای پنل، تقویم کاملاً عوض می‌شود.'
+      : 'حالت «نمایش هم‌زمان»: با دکمه‌ی بالای پنل، تقویم دیگر در کنار آن نمایش داده می‌شود.');
+  });
+
+  /* ---------- ۷) inline و تم تاریک ---------- */
+  var inlineDark = ADP.create('#demo-inline', {
+    calendar: 'jalali',
+    inline: true,
+    theme: 'dark',
+    accent: '#7c3aed',
+    initialDate: 'today',
+    showHolidayList: false
+  });
+
+  var divField = ADP.create('#demo-div', {
+    calendar: 'jalali',
+    theme: 'light',
+    size: 'lg'
+  });
+
+  /* ---------- ۸) فیلد div + فیلد مخفی فرم ---------- */
+  var formPicker = ADP.create('#demo-form-field', {
+    calendar: 'jalali',
+    name: 'trip_date',
+    placeholder: 'تاریخ مرخصی'
+  });
+
+  /* ---------- ۹) انتخاب ساعت ---------- */
+  var timePicker = ADP.create('#demo-time', {
+    calendar: 'jalali',
+    timePicker: true,
+    timeStep: 5,
+    format: 'YYYY/MM/DD [ساعت] HH:mm',
+    onChange: function (v) {
+      out('out-time', 'مقدار ثبت‌شده: <b>' + esc(v.text) + '</b>');
+    }
+  });
+
+  /* ---------- دکمه‌های کنترلی دمو ---------- */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var v;
+
+    if (act === 'get-basic') {
+      v = basic.getGregorianDate();
+      out('out-basic', v ? 'مقدار فعلی: <b>' + esc(basic.getText()) + '</b> | Date جاوااسکریپت: ' + v.toDateString() : 'خالی است.');
+    } else if (act === 'set-basic') {
+      basic.setDate('1370/02/12');
+    } else if (act === 'get-both') {
+      out('out-both', both.getText()
+        ? 'شمسی <b>' + esc(ADP.format(both.getDate(), 'YYYY/MM/DD dddd', 'jalali')) + '</b> = میلادی <b>' +
+          esc(ADP.format(both.getGregorian(), 'YYYY/MM/DD dddd', 'gregorian', { persianDigits: false })) + '</b>'
+        : 'خالی است.');
+    } else if (act === 'today-default') {
+      defaulted.setDate(new Date());
+      out('out-default', 'مقدار روی امروز تنظیم شد: <b>' + esc(defaulted.getText()) + '</b>');
+    } else if (act === 'lock-default') {
+      var iso = prompt('تاریخ شروع نمایش را وارد کنید (نمونه: 1404/10/01)', '1404/10/01');
+      if (iso) {
+        defaulted.setOptions({ initialDate: iso });
+        out('out-default', 'نمای شروع روی <b>' + esc(iso) + '</b> تنظیم شد. کادر را باز کنید.');
+      }
+    } else if (act === 'get-range') {
+      var r = rangePicker.getRange();
+      out('out-range', r.from ? 'از <b>' + esc(r.from.text) + '</b> تا <b>' + esc(r.to ? r.to.text : '—') + '</b>' +
+        '\nمیلادی: ' + esc(r.from.gregorian.text) + ' تا ' + esc(r.to ? r.to.gregorian.text : '—') : 'خالی است.');
+    } else if (act === 'set-range') {
+      rangePicker.setRange('1404/05/01', '1404/05/20');
+      out('out-range', 'بازه‌ی نمونه تنظیم شد.');
+    } else if (act === 'clear-range') {
+      rangePicker.clear();
+    } else if (act === 'get-limited') {
+      out('out-limited', 'محدودیت‌ها: <code>' + esc(JSON.stringify(limited.getLimits())) + '</code>');
+    } else if (act === 'load-json-file') {
+      out('out-json', 'در حال خواندن <code>holidays-sample.json</code> …');
+      jsonPicker.loadHolidays('holidays-sample.json').then(function (res) {
+        out('out-json', res
+          ? 'فایل JSON با موفقیت خوانده و به تقویم اضافه شد. منبع: <b>holidays-sample.json</b>'
+          : 'خواندن فایل ممکن نشد (اگر صفحه را با <code>file://</code> باز کرده‌اید، آن را با یک وب‌سرور ساده سرو کنید).');
+      });
+    } else if (act === 'holi-json') {
+      var list = jsonPicker.getHolidays(1405, 'jalali');
+      out('out-json', list.length
+        ? '<b>' + fa(list.length) + '</b> تعطیل رسمی در سال ۱۴۰۵ ثبت شده است: ' +
+          list.slice(0, 6).map(function (h) { return esc(ADP.format(h, 'D MMMM', 'jalali')) + ' (' + esc(h.title) + ')'; }).join('، ')
+        : 'داده‌ای برای ۱۴۰۵ موجود نیست.');
+    } else if (act === 'dump-json') {
+      var s = jsonPicker.exportHolidays(true);
+      jsonPicker.downloadHolidays('holidays-aria.json');
+      out('out-json', 'فایل JSON ذخیره شد (' + fa((s.match(/\n/g) || []).length + 1) + ' خط). برای بازنشانی: <code>AriaDatePicker.get(document.querySelector("#demo-json"))</code>');
+    } else if (act === 'evt-add') {
+      var t = ADP.utils.todayIn('jalali');
+      var days = [];
+      for (var i = 1; i <= 5; i++) {
+        var jdn = ADP.utils.jdnFromJalali(t.y, t.m, t.d) + i;
+        var p = ADP.utils.jalaliFromJdn(jdn);
+        days.push(p.jy + '/' + String(p.jm).padStart(2, '0') + '/' + String(p.jd).padStart(2, '0'));
+      }
+      evtPicker.addDayEvent({
+        days: days,
+        title: 'رویداد تازه',
+        args: ['$date', '۵ روز آینده'],
+        handler: function (dateObj, label) {
+          pushLog('ورودی دلخواه: <b>' + label + '</b> — تاریخ: <b>' + esc(dateObj.text) + '</b>');
+        }
+      });
+      out('out-events', 'رویداد به ۵ روز آینده اضافه شد (' + fa(evtPicker.getDayEvents().length) + ' رویداد فعال). روی آن روزها کلیک کنید.');
+    } else if (act === 'evt-list') {
+      var specs = evtPicker.getDayEvents();
+      out('out-events', specs.length
+        ? 'رویدادهای فعال:<br>' + specs.map(function (sp) {
+            return '• <b>' + esc(sp.id) + '</b> — ' + esc(sp.title || 'بدون عنوان') +
+              ' | روزها: ' + esc((sp.days || sp.weekdays || sp.range || []).join('، ') || '—') +
+              ' | ورودی‌ها: ' + (sp.args ? esc(JSON.stringify(sp.args)) : 'پیش‌فرض (info, picker)');
+          }).join('<br>')
+        : 'رویدادی تعریف نشده است.');
+    } else if (act === 'evt-clear') {
+      evtPicker.setDayEvents(null);
+      out('out-events', 'همه‌ی رویدادهای شخصی پاک شدند.');
+    } else if (act === 'sw-show') {
+      switchPicker.showGregorian();
+    } else if (act === 'sw-hide') {
+      switchPicker.hideGregorian();
+    } else if (act === 'fetch-online') {
+      out('out-online', 'در حال دریافت از اینترنت…');
+      online.fetchHolidays(true).then(function (res) {
+        out('out-online', 'نتیجه‌ی دریافت دستی: <b>' + esc(JSON.stringify(res || {})) + '</b><br>روی پنل تعطیلات بررسی کنید و در صورت نیاز با دکمه‌ی «ذخیره در فایل JSON» نگه دارید.');
+      });
+    } else if (act === 'dump-online') {
+      online.downloadHolidays('holidays-online.json');
+      out('out-online', 'تعطیلات دریافت‌شده در فایل <b>holidays-online.json</b> ذخیره شد.');
+    } else if (act === 'clear-cache') {
+      online.holiday.clearCache();
+      online.render();
+      out('out-online', 'کش تعطیلات پاک شد.');
+    } else if (act === 'show-form-value') {
+      var hidden = document.querySelector('input[name="trip_date"]');
+      out('out-form', hidden ? 'مقدار فیلد مخفی: <b>' + esc(hidden.value || '(خالی)') + '</b>' : 'فیلد مخفی پیدا نشد.');
+    }
+  });
+
+  /* نمایش زنده‌ی مقادیر در کنسول برای یادگیری */
+  [basic, both, rangePicker, limited, timePicker].forEach(function (p) {
+    p.target.addEventListener('adp:change', function (e) {
+      if (window.console) console.log('[adp:change]', e.detail);
+    });
+  });
+}());
+</script>
+</body>
+</html>

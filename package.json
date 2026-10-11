@@ -1,0 +1,38 @@
+{
+  "name": "aria-date-picker",
+  "version": "1.1.0",
+  "description": "دیت‌پیکر تک‌فایلی شمسی و میلادی با جاوااسکریپت خالص / Single-file Jalali & Gregorian date picker with zero dependencies",
+  "main": "aria-datepicker.js",
+  "files": [
+    "aria-datepicker.js",
+    "dist/aria-datepicker.min.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "node tools/build.js && node test/test.js && node test/demo-test.js",
+    "demo": "python3 -m http.server 8000",
+    "zip": "node tools/pack.js"
+  },
+  "keywords": [
+    "datepicker",
+    "jalali",
+    "shamsi",
+    "persian-calendar",
+    "gregorian",
+    "holiday",
+    "تقویم شمسی",
+    "دیت پیکر"
+  ],
+  "author": "wrappedman",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wrappedman/Aria-Date-picker.git"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "terser": "^5.0.0"
+  }
+}

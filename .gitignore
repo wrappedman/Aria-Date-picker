@@ -1,0 +1,7 @@
+# وابستگی‌های توسعه (فقط برای بیلد و تست)
+node_modules/
+package-lock.json
+
+# خروجی‌های موقت
+*.log
+.DS_Store
