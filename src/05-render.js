@@ -75,7 +75,8 @@
         this.panelEl.classList.add(this.cls('hidden'));
         return this;
       }
-      var html = '<div class="' + this.cls('cals') + '">';
+      var html = this.renderSwitchBar();
+      html += '<div class="' + this.cls('cals') + '">';
       this.calendars.forEach(function (cal) { html += self.renderPanel(cal); });
       html += '</div>';
       html += this.renderFooter();
@@ -85,6 +86,30 @@
       if (!(this.options.confirmMode && this.state.open)) this._syncOutputs();
       if (this.state.open && !this._modalMode && !this.inline) this._position();
       return this;
+    },
+
+    /** نوار سوییچ تقویم (نمایش هم‌زمان یا تعویض تقویم با یک دکمه) */
+    renderSwitchBar: function () {
+      var self = this;
+      var cls = function (n) { return self.cls(n); };
+      var avail = this.availableCalendars || this.calendars;
+      if (avail.length < 2) return '';
+      if (this.options.calendarSwitch === false) return '';
+      var lang = this.calLang === 'en' ? 'en' : 'fa';
+      var html = '<div class="' + cls('switchbar') + '" role="group" aria-label="' +
+        escapeHtml(lang === 'en' ? 'Calendar' : 'انتخاب تقویم') + '">';
+      avail.forEach(function (cal) {
+        var active = self.calendars.indexOf(cal) !== -1;
+        html += '<button type="button" class="' + cls('switch') + (active ? ' ' + cls('active') : '') + '"' +
+          ' data-switch="' + cal + '" aria-pressed="' + (active ? 'true' : 'false') + '"' +
+          ' title="' + escapeHtml(self.calLang === 'en' ? CALENDARS[cal].labelEn : CALENDARS[cal].label) + '">' +
+          escapeHtml(self.calLang === 'en' ? CALENDARS[cal].labelEn : CALENDARS[cal].label) + '</button>';
+      });
+      html += '<span class="' + cls('switch-hint') + '">' + escapeHtml(this.calLang === 'en'
+        ? (this.options.switchMode === 'swap' ? 'switch calendar' : 'show side by side')
+        : (this.options.switchMode === 'swap' ? 'تعویض تقویم' : 'نمایش هم‌زمان')) + '</span>';
+      html += '</div>';
+      return html;
     },
 
     /** جهت و زبان هر پنل */
@@ -234,6 +259,10 @@
       var hol = this.holiday.entry(cal, y, m, d);
       var isHoliday = !!(hol && hol.type !== 'event');
       var title = hol ? hol.title : '';
+      var dayEvts = this._eventsFor(dobj);
+      for (var ei = 0; ei < dayEvts.length; ei++) {
+        if (dayEvts[ei].title) title = (title ? title + ' — ' : '') + dayEvts[ei].title;
+      }
       var disabled = this.isDisabled(dobj);
       var isToday = jdn === this.todayJdn;
 
@@ -269,6 +298,12 @@
       }
       if (isToday) className += ' ' + cls('today');
       if (disabled) className += ' ' + cls('disabled');
+      if (dayEvts.length) {
+        className += ' ' + cls('has-event');
+        dayEvts.forEach(function (spec) {
+          if (spec.className) className += ' ' + spec.className;
+        });
+      }
 
       var label = formatDate({ calendar: cal, y: y, m: m, d: d, jdn: jdn }, 'dddd D MMMM YYYY', { lang: this.panelLang(cal) });
       if (title) label += ' — ' + title;
@@ -288,6 +323,7 @@
       if (style === 'dot' || style === 'both') {
         if ((isHoliday || isWeekend) && o.highlightWeekends) html += '<span class="' + cls('dot') + '"></span>';
       }
+      if (dayEvts.length) html += '<span class="' + cls('event-dot') + '"></span>';
       html += '</button>';
       return html;
     },
@@ -351,7 +387,22 @@
       var self = this;
       var cls = function (n) { return self.cls(n); };
       var limit = o.holidayListLimit || 6;
-      var items = this.holiday.monthHolidays(cal, view.y, view.m);
+      var items = this.holiday.monthHolidays(cal, view.y, view.m).slice();
+      // افزودن رویدادهای شخصی دارای عنوان به فهرست
+      var self2 = this;
+      var monthLen = CALENDARS[cal].monthLength(view.y, view.m);
+      for (var dd = 1; dd <= monthLen; dd++) {
+        var evs = this._eventsFor({ calendar: cal, y: view.y, m: view.m, d: dd, jdn: CALENDARS[cal].jdn(view.y, view.m, dd) });
+        evs.forEach(function (spec) {
+          if (!spec.title) return;
+          var isHolidayItem = spec.type === 'holiday';
+          items.push({
+            y: view.y, m: view.m, d: dd, jdn: CALENDARS[cal].jdn(view.y, view.m, dd),
+            title: spec.title, type: isHolidayItem ? 'public' : 'event', custom: true
+          });
+        });
+      }
+      items.sort(function (a, b) { return a.jdn - b.jdn; });
       var html = '<div class="' + cls('list') + '">';
       html += '<div class="' + cls('list-title') + '">' + escapeHtml(this.labels.holidayList) + '</div>';
       if (!items.length) {
@@ -361,7 +412,7 @@
         html += '<div class="' + cls('list-items') + '">';
         items.slice(0, limit).forEach(function (it) {
           var monName = self.calMonthNames(cal, self.panelLang(cal))[it.m - 1];
-          html += '<button type="button" class="' + cls('list-item') + '" data-holiday-item="' + it.jdn + '" data-cal="' + cal + '">' +
+          html += '<button type="button" class="' + cls('list-item') + (it.custom ? ' ' + cls('list-item-event') : '') + '" data-holiday-item="' + it.jdn + '" data-cal="' + cal + '">' +
             '<span class="' + cls('list-day') + '">' + self.num(it.d, cal) + ' ' + escapeHtml(monName) + '</span>' +
             '<span>' + escapeHtml(it.title || self.labels.holiday) + '</span></button>';
         });
@@ -442,11 +493,6 @@
         var txt = this.text();
         html += '<span>' + (txt ? escapeHtml(txt) : escapeHtml(this.placeholder())) + '</span>';
       }
-      if (this.options.showOnlineStatus) {
-        var online = this.holiday.isOnline();
-        html += '<span class="' + cls('status') + (online ? '' : ' ' + cls('offline')) + '"><i></i>' +
-          escapeHtml(online ? this.labels.online : this.labels.offline) + '</span>';
-      }
       return html;
     },
 
@@ -468,6 +514,12 @@
       this.panelEl.addEventListener('click', function (e) {
         var t = e.target;
 
+        var sw = closest(t, '[data-switch]');
+        if (sw) {
+          e.preventDefault();
+          self.switchCalendar(sw.getAttribute('data-switch'));
+          return;
+        }
         var nav = closest(t, '[data-nav]');
         if (nav) {
           e.preventDefault();
@@ -494,7 +546,6 @@
           self.state.view[cal] = { y: self.state.view[cal].y, m: +monthBtn.getAttribute('data-month') };
           self.state.viewMode[cal] = 'days';
           self.render();
-          self._maybeFetchForView();
           return;
         }
         var yearBtn = closest(t, '[data-year]');
@@ -504,7 +555,6 @@
           self.state.view[calY] = { y: +yearBtn.getAttribute('data-year'), m: self.state.view[calY].m };
           self.state.viewMode[calY] = 'months';
           self.render();
-          self._maybeFetchForView();
           return;
         }
         var viewBtn = closest(t, '[data-view]');
@@ -676,7 +726,6 @@
         el.setAttribute('tabindex', '0');
         try { el.focus({ preventScroll: false }); } catch (err) { el.focus(); }
       }
-      this._maybeFetchForView();
       return this;
     }
   });

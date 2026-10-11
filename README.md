@@ -10,7 +10,7 @@
 </script>
 ```
 
-> نسخه: `1.0.0` — مجوز: GPL-3.0 — حجم: ~۱۵۵ کیلوبایت (غیرفشرده) / ~۸۴ کیلوبایت (min)
+> نسخه: `1.1.0` — مجوز: GPL-3.0 — حجم: ~۱۵۵ کیلوبایت (غیرفشرده) / ~۸۴ کیلوبایت (min)
 
 ---
 
@@ -19,6 +19,10 @@
 - [ویژگی‌ها](#ویژگیها)
 - [نصب و اجرای دمو](#نصب-و-اجرای-دمو)
 - [نمونه‌های سریع](#نمونههای-سریع)
+- [ارقام فارسی/لاتین](#ارقام-فارسیلاتین)
+- [رویداد شخصی با انتخاب روز](#رویداد-شخصی-با-انتخاب-روز)
+- [بسته‌شدن یا بازماندن پنجره](#بستهشدن-یا-بازماندن-پنجره)
+- [سوییچ تقویم با یک دکمه](#سوییچ-تقویم-با-یک-دکمه)
 - [مرجع گزینه‌ها](#مرجع-گزینهها)
 - [متدها و API](#متدها-و-api)
 - [رویدادها](#رویدادها)
@@ -41,8 +45,12 @@
 | دو تقویم | شمسی، میلادی یا نمایش هم‌زمان هر دو در یک پنل (`calendar: 'both'`) |
 | حالت بازه | انتخاب «از تاریخ تا تاریخ» با پیش‌نمایش زنده‌ی بازه (`range: true`) |
 | محدودسازی | انتخاب آزاد یا محدود به بازه/قبل از تاریخ/بعد از تاریخ + حداقل و حداکثر طول بازه |
-| تعطیلات سفارشی | معرفی تعطیلات با فایل JSON یا آبجکت جاوااسکریپت (`holidayJson` / `holidays`) |
-| تعطیلات آنلاین | دریافت خودکار (شامل تعطیلات قمری) و ذخیره در حافظه‌ی مرورگر + امکان دانلود فایل JSON |
+| تعطیلات سفارشی | معرفی تعطیلات با فایل JSON یا آبجکت جاوااسکریپت (`holidayJson` / `holidays`) — بدون هیچ دانلود خودکار |
+| دریافت اختیاری | `fetchHolidays()` برای دریافت دستی از اینترنت (اختیاری) + کش مرورگر + دانلود فایل JSON |
+| ارقام قابل تنظیم | ارقام فارسی/لاتین جداگانه برای تقویم شمسی و میلادی (`persianDigits`) |
+| رویداد شخصی روزها | اجرای تابع دلخواه با ورودی‌های مشخص، هنگام انتخاب یک روز (`dayEvents`) |
+| کنترل بسته‌شدن | تعیین بسته‌شدن یا بازماندن پنجره پس از انتخاب (`closeOnSelect` / `closeOnSelectRange`) |
+| سوییچ تقویم | دکمه‌ی سوییچ برای نمایش هم‌زمان میلادی یا تعویض کامل تقویم (`switchToCalendar` / `switchMode`) |
 | تاریخ پیش‌فرض | تعیین نمای شروع (`initialDate`) و مقدار پیش‌فرض کادر (`defaultDate`) |
 | رنگ‌بندی تعطیلات | جمعه‌ها و تعطیلات رسمی به‌صورت پیش‌فرض قرمز |
 | یونیک‌سازی کلاس‌ها | همه‌ی کلاس‌ها با پیشوند `adp-` و قابل تغییر با گزینه‌ی `prefix` |
@@ -153,18 +161,123 @@ AriaDatePicker.create('#holidays', {
 });
 ```
 
-### ۶) دریافت تعطیلات از اینترنت
+### ۶) دریافت دستی تعطیلات از اینترنت (اختیاری)
 
 ```js
 var dp = AriaDatePicker.create('#online', {
   calendar: 'both',
-  autoFetch: 'today',    // 'off' | 'today' | 'visible'
+  holidayJson: 'holidays-sample.json',   // منبع پیش‌فرض: فایل محلی (بدون درخواست شبکه)
   countryCode: 'IR',
   onHolidaysLoaded: function (info) { console.log(info.source, info.added); }
 });
 
-dp.fetchHolidays();               // دریافت مجدد (Promise)
-dp.downloadHolidays('holidays.json');  // ذخیره‌ی داده‌های دریافت‌شده در فایل JSON
+// فقط وقتی خودتان بخواهید:
+dp.fetchHolidays();                    // دریافت از اینترنت (Promise)
+dp.syncHolidays(true);                 // مترادف با اجبار به تازه‌سازی
+dp.downloadHolidays('holidays.json');  // ذخیره‌ی نتیجه در فایل JSON
+dp.clearHolidays();                    // پاک کردن کش
+```
+
+### ۶.۱) ارقام فارسی یا لاتین (به تفکیک هر تقویم)
+
+```js
+AriaDatePicker.create('#input', {
+  calendar: 'both',
+  persianDigits: 'auto',                                // پیش‌فرض: شمسی فارسی، میلادی لاتین
+  // persianDigits: true,                               // همه‌ی ارقام فارسی
+  // persianDigits: false,                              // همه‌ی ارقام لاتین
+  // persianDigits: { jalali: true, gregorian: false }, // تنظیم جداگانه‌ی هر تقویم
+  dualDigits: true                                      // نمایش هر دو شکل عدد در خانه‌ها
+});
+
+// تغییر در زمان اجرا
+dp.setOptions({ persianDigits: { jalali: false, gregorian: true } });
+```
+
+### ۶.۲) رویداد شخصی با انتخاب روز
+
+```js
+var dp = AriaDatePicker.create('#events', {
+  calendar: 'jalali',
+  closeOnSelect: false,             // پنل باز می‌ماند تا چند رویداد امتحان شود
+  dayEvents: [
+    // الف) روزهای مشخص + ورودی پیش‌فرض (info, picker)
+    {
+      days: ['1405/01/05', '1405/01/07'],
+      title: 'جلسه‌ی کاری',
+      handler: function (info, picker) {
+        alert('جلسه در ' + info.text);            // info شامل تاریخ شمسی، میلادی، تعطیلات و ...
+      }
+    },
+
+    // ب) ورودی‌های دلخواه کاربر (args)
+    {
+      days: ['1405/02/01'],
+      title: 'ارسال پیامک',
+      args: ['$date', 'sms', 100],
+      handler: function (dateObj, type, price) {   // ورودی‌ها دقیقاً همان‌هایی هستند که تعیین کرده‌اید
+        console.log(type, dateObj.gregorian.text, price);
+      }
+    },
+
+    // ج) همه‌ی جمعه‌ها، فقط یک‌بار اجرا
+    { weekdays: [5], title: 'تعطیل هفتگی', once: true, handler: function (info) { /* ... */ } },
+
+    // د) یک بازه‌ی تاریخ + کلاس CSS دلخواه
+    { range: ['1405/03/01', '1405/03/10'], title: 'سفر', className: 'my-trip',
+      handler: function (info) { /* ... */ } },
+
+    // ه) رویداد مبتنی بر طول بازه‌ی انتخابی
+    { rangeDays: { min: 3, max: 7 }, title: 'بازه‌ی کوتاه',
+      handler: function (info) { alert(info.range.lengthDays + ' روز'); } },
+
+    // و) غیرقابل انتخاب کردن یک روز
+    { days: ['1405/01/13'], disabled: true, title: 'تعطیل رسمی' }
+  ],
+  onDayEvent: function (info, picker) { console.log('رویداد اجرا شد:', info.event.id); }
+});
+
+dp.setDayEvents({...});     dp.addDayEvent({...});    dp.removeDayEvent('dayEvent1');
+dp.getDayEvents();          dp.triggerDayEvents('1405/01/05');   dp.getLastDayEvent();
+```
+
+ورودی‌های `<code>info</code>`: `date` (شیء کامل تاریخ شامل `jalali`/`gregorian`)، `jdn`، `calendar`،
+`text`، `jalali`، `gregorian`، `range` (در حالت بازه: `from`/`to`/`lengthDays`)، `committed`،
+`isHoliday`، `holidayTitle`، `event` (شناسه و عنوان رویداد) و `picker`.
+
+جای‌نگهدارهای `args`: `'$date'`, `'$text'`, `'$range'`, `'$jdn'`, `'$jalali'`, `'$gregorian'`,
+`'$info'`, `'$picker'`, `'$target'`, `'$event'` — هر مقدار ثابت دیگری عیناً به تابع پاس داده می‌شود.
+اگر `args` تعیین نشود، تابع به شکل `handler(info, picker)` و با `this` برابر نمونه‌ی دیت‌پیکر صدا زده می‌شود.
+
+### ۶.۳) بسته‌شدن یا بازماندن پنجره پس از انتخاب
+
+```js
+AriaDatePicker.create('#input', {
+  calendar: 'jalali',
+  closeOnSelect: false,        // پنل باز می‌ماند (برای انتخاب‌های پی‌درپی)
+  // closeOnSelect: true,      // پیش‌فرض: پس از انتخاب، پنل بسته می‌شود
+
+  range: true,
+  closeOnSelectRange: false    // در حالت بازه، پس از انتخاب تاریخ دوم هم باز بماند
+});
+```
+
+### ۶.۴) سوییچ تقویم با یک دکمه
+
+```js
+AriaDatePicker.create('#switch', {
+  calendar: 'jalali',
+  switchToCalendar: 'gregorian',   // دکمه‌ی سوییچ بالای پنل
+  switchMode: 'both',              // 'both' = نمایش هم‌زمان | 'swap' = تعویض کامل تقویم
+  calendarSwitch: true,            // نمایش دکمه‌ها (پیش‌فرض: در صورت وجود دو تقویم، خودکار)
+  onCalendarChange: function (info) { console.log(info.calendars, info.primary); }
+});
+
+dp.switchCalendar('gregorian');   // یک کلیک: افزودن/حذف یا تعویض
+dp.showGregorian();  dp.hideGregorian();  dp.showBothCalendars();
+dp.setSwitchMode('swap');         // تغییر حالت در زمان اجرا
+dp.getPrimaryCalendar();  dp.setPrimaryCalendar('gregorian');
+dp.getAvailableCalendars();  dp.isCalendarActive('gregorian');
 ```
 
 ### ۷) پنل همیشه‌باز (inline) و تم تاریک
@@ -221,7 +334,10 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | `gregorianLang` | `lang` | زبان نام ماه‌های میلادی |
 | `gregorianDir` | خودکار | جهت پنل میلادی: `'ltr'` یا `'rtl'` |
 | `weekStart` | هر تقویم | ایندکس شروع هفته (0=یکشنبه … 6=شنبه) یا `{jalali:6, gregorian:1}` |
-| `persianDigits` | `'auto'` | ارقام فارسی: `'auto'` (شمسی فارسی، میلادی لاتین)، `true`، `false` |
+| `persianDigits` | `'auto'` | ارقام: `'auto'` (شمسی فارسی، میلادی لاتین)، `true` (همه فارسی)، `false` (همه لاتین) یا `{ jalali: true, gregorian: false }` |
+| `calendarSwitch` | خودکار | نمایش دکمه‌ی سوییچ تقویم: `true`/`false` |
+| `switchToCalendar` | `null` | تقویم دیگری که با دکمه در دسترس قرار می‌گیرد (مثلاً `'gregorian'`) |
+| `switchMode` | `'both'` | `'both'` = نمایش هم‌زمان در کنار هم، `'swap'` = تعویض کامل تقویم |
 | `dualDigits` | `false` | نمایش هم‌زمان دو شکل عدد (۱۲ و 12) در هر خانه |
 | `format` / `displayFormat` | `'YYYY/MM/DD'` | قالب نمایش تاریخ؛ می‌تواند به تفکیک تقویم باشد |
 | `dualDisplay` | `false` | نمایش هر دو تقویم در کادر ورودی |
@@ -248,7 +364,10 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | `disabledRanges` | `null` | آرایه‌ی بازه‌های غیرفعال `[{from, to}]` |
 | `blackout` | `null` | تابع `(date) => true/false` برای منطق دلخواه |
 | `confirmMode` / `autoApply` | `false` | ثبت مقدار فقط با دکمه‌ی «تأیید» |
-| `closeOnSelect` / `rangeCloseOnSelect` | `true` | بستن خودکار پنل پس از انتخاب |
+| `closeOnSelect` | `true` | بستن پنل پس از انتخاب تاریخ (در حالت تک‌تاریخی) |
+| `closeOnSelectRange` | `closeOnSelect` | بستن پنل پس از انتخاب تاریخ دوم در حالت بازه |
+| `dayEvents` | `null` | رویدادهای شخصی روزها (شیء یا آرایه) |
+| `onDayEvent` | `null` | تابع سراسری که پس از هر رویداد شخصی اجرا می‌شود |
 | `monthsPerPanel` | `1` | تعداد ماه نمایش‌داده‌شده در هر پنل (۱ تا ۳) |
 | `showOutsideDays` | `true` | نمایش روزهای ماه‌های مجاور |
 | `highlightWeekends` | `true` | رنگ قرمز برای جمعه‌ها |
@@ -260,15 +379,13 @@ AriaDatePicker.create('#box', { calendar: 'jalali', name: 'trip_date' });
 | گزینه | پیش‌فرض | توضیح |
 | --- | --- | --- |
 | `holidays` | `null` | آبجکت JSON تعطیلات |
-| `holidayJson` | `null` | آدرس فایل JSON تعطیلات |
+| `holidayJson` | `null` | آدرس فایل JSON تعطیلات (منبع پیش‌فرض و آفلاین) |
 | `weekends` | `{jalali:[5], gregorian:[0,6]}` | روزهای تعطیل هفتگی |
-| `autoFetch` | `'today'` | دریافت خودکار از اینترنت: `'off'`، `'today'`، `'visible'` |
 | `countryCode` | `'IR'` | کد کشور برای سرویس‌های میلادی |
 | `holidayCache` / `holidayCacheKey` / `holidayTtl` | `true` / خودکار / ۷ روز | کش محلی (localStorage) |
 | `holidayProviders` | `null` | سرویس‌های سفارشی دریافت تعطیلات |
 | `showHolidayList` | `true` | نمایش فهرست مناسبت‌های ماه زیر تقویم |
 | `holidayListLimit` | `6` | حداکثر تعداد مناسبت در فهرست |
-| `showOnlineStatus` | `true` | نمایش وضعیت برخط/آفلاین |
 | `showExportButton` | `false` | دکمه‌ی `JSON` برای دانلود فایل تعطیلات |
 | `holidayJsonName` | `'holidays.json'` | نام فایل خروجی |
 
@@ -306,7 +423,12 @@ dp.setCalendar('gregorian'); dp.getCalendar(); dp.getCalendars();
 dp.setOptions({ theme: 'dark' }); dp.setViewDate('1405/07/01'); dp.getViewDate();
 dp.setDisabled(true); dp.refresh();
 dp.getHolidays(1405, 'jalali');  dp.isHoliday();  dp.getHolidayTitle();
-dp.addHolidays({...}); dp.loadHolidays('holidays.json'); dp.syncHolidays(true);
+dp.setDayEvents({...}); dp.addDayEvent({...}); dp.removeDayEvent('dayEvent1');
+dp.getDayEvents(); dp.triggerDayEvents('1405/01/05'); dp.getLastDayEvent();
+dp.switchCalendar('gregorian'); dp.showGregorian(); dp.hideGregorian(); dp.showBothCalendars();
+dp.setSwitchMode('swap'); dp.getPrimaryCalendar(); dp.setPrimaryCalendar('gregorian');
+dp.getAvailableCalendars(); dp.isCalendarActive('gregorian');
+dp.addHolidays({...}); dp.loadHolidays('holidays.json'); dp.syncHolidays(true);  // دریافت دستی
 dp.exportHolidays(); dp.downloadHolidays('holidays.json'); dp.clearHolidays();
 dp.destroy();
 ```
@@ -314,7 +436,7 @@ dp.destroy();
 توابع مستقل:
 
 ```js
-AriaDatePicker.version;                       // '1.0.0'
+AriaDatePicker.version;                       // '1.1.0'
 AriaDatePicker.instances;                     // همه‌ی نمونه‌های فعال
 AriaDatePicker.get(element);                  // یافتن نمونه از روی عنصر
 AriaDatePicker.autoInit(document, options);   // راه‌اندازی خودکار
@@ -336,7 +458,9 @@ AriaDatePicker.utils;                        // توابع تبدیل تقویم
 
 ```js
 AriaDatePicker.create('#el', {
-  onChange: function (value, picker) {},   // تغییر مقدار
+  onChange: function (value, picker) {},          // تغییر مقدار
+  onDayEvent: function (info, picker) {},         // اجرای رویداد شخصی یک روز
+  onCalendarChange: function (info, picker) {},   // تغییر تقویم با دکمه‌ی سوییچ
   onSelect: function (date, picker) {},    // کلیک روی یک روز
   onOpen: function (picker) {},
   onClose: function (picker) {},
@@ -353,7 +477,7 @@ AriaDatePicker.create('#el', {
 document.querySelector('#el').addEventListener('adp:change', function (e) {
   console.log(e.detail);   // { calendar, range, text, from, to, jalali, gregorian }
 });
-// همچنین: adp:open و adp:close
+// همچنین: adp:open، adp:close و adp:dayevent (رویداد شخصی روز) و adp:calendarchange
 ```
 
 ---
@@ -397,8 +521,12 @@ document.querySelector('#el').addEventListener('adp:change', function (e) {
 
 ---
 
-## دریافت تعطیلات از اینترنت
+## دریافت اختیاری تعطیلات از اینترنت
 
+> **به‌صورت پیش‌فرض هیچ دانلود خودکاری انجام نمی‌شود.** تعطیلات فقط از فایل JSON محلی
+> (`holidayJson`)، آبجکت `holidays` یا داده‌ی ذخیره‌شده در مرورگر خوانده می‌شود.
+
+- دریافت اینترنتی فقط با فراخوانی دستی `dp.fetchHolidays()` (یا `dp.syncHolidays()`) انجام می‌شود؛ معمولاً پشت یک دکمه.
 - سرویس‌های پیش‌فرض تقویم شمسی: `holidayapi.ir`، `persiancalapi.ir`، `api.keybit.ir`
 - سرویس‌های پیش‌فرض تقویم میلادی: `holidayapi.ir`، `date.nager.at`
 - اگر سرویس اول پاسخ ندهد، سرویس بعدی در زنجیره امتحان می‌شود؛ در صورت آفلاین بودن، داده‌ی ذخیره‌شده‌ی قبلی در `localStorage` استفاده می‌شود.
@@ -505,7 +633,7 @@ src/07-api.js         API عمومی، autoInit، تابع‌های کمکی و 
 
 ```bash
 npm run build     # ساخت aria-datepicker.js و dist/aria-datepicker.min.js
-npm test          # ۹۴ تست موتور تقویم، انتخاب، محدودیت‌ها و تعطیلات + ۲۴ تست صفحه‌ی دمو (jsdom)
+npm test          # ۱۵۴ تست موتور تقویم، انتخاب، محدودیت‌ها، تعطیلات، رویدادها و سوییچ تقویم + ۳۷ تست صفحه‌ی دمو (jsdom)
 ```
 
 > خروجی نهایی همان `aria-datepicker.js` است؛ می‌توانید فایل ساخته‌شده را مستقیم در پروژه‌ی خود استفاده کنید.

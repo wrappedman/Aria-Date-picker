@@ -11,6 +11,8 @@ const { JSDOM } = require('jsdom');
 const code = fs.readFileSync(path.join(__dirname, '..', 'aria-datepicker.js'), 'utf8');
 
 let passed = 0, failed = 0;
+let manualFetchCount = 0;
+let manualFetchRequested = false;
 function ok(name, cond, extra) {
   if (cond) { passed++; console.log('  ✓ ' + name); }
   else { failed++; console.log('  ✗ ' + name + (extra ? '  → ' + extra : '')); }
@@ -331,6 +333,246 @@ group('۱۲) تعطیلات اینترنتی (سرویس جعلی)');
 function runExtra() {
 
 /* ================================================================== */
+group('۱۵) ارقام فارسی/لاتین قابل تنظیم برای هر دو تقویم');
+{
+  const { w, doc } = makeDom('<input id="z1"><input id="z2"><input id="z3"><input id="z4">');
+  const ADP = w.AriaDatePicker;
+
+  const fa = ADP.create('#z1', { calendar: 'both', persianDigits: true, defaultDate: '1405/01/01' });
+  ok('ارقام فارسی برای هر دو تقویم', doc.getElementById('z1').value.indexOf('۱۴۰۵') === 0, doc.getElementById('z1').value);
+  fa.open();
+  const gPanelFa = fa.panelOf('gregorian');
+  ok('دیگر ارقام میلادی هم فارسی است', /[۰-۹]/.test(gPanelFa.querySelector('[data-day] .adp-day-num').textContent),
+     gPanelFa.querySelector('[data-day] .adp-day-num').textContent);
+  fa.destroy();
+
+  const en = ADP.create('#z2', { calendar: 'both', persianDigits: false, defaultDate: '1405/01/01' });
+  ok('ارقام لاتین برای هر دو تقویم', doc.getElementById('z2').value.indexOf('1405') === 0, doc.getElementById('z2').value);
+  en.open();
+  ok('خانه‌های شمسی هم لاتین', /^[0-9]+$/.test(en.panelOf('jalali').querySelector('[data-day] .adp-day-num').textContent));
+  en.destroy();
+
+  const mixed = ADP.create('#z3', { calendar: 'both', persianDigits: { jalali: true, gregorian: false }, defaultDate: '1405/01/01' });
+  mixed.open();
+  ok('حالت تلفیقی: شمسی فارسی', /[۰-۹]/.test(mixed.panelOf('jalali').querySelector('[data-day] .adp-day-num').textContent));
+  ok('حالت تلفیقی: میلادی لاتین', /^[0-9]+$/.test(mixed.panelOf('gregorian').querySelector('[data-day] .adp-day-num').textContent));
+  mixed.setOptions({ persianDigits: { jalali: false, gregorian: true } });
+  ok('تغییر تلفیقی در زمان اجرا', /^[0-9]+$/.test(mixed.panelOf('jalali').querySelector('[data-day] .adp-day-num').textContent));
+  mixed.destroy();
+
+  const auto = ADP.create('#z4', { calendar: 'both', persianDigits: 'auto', defaultDate: '1405/01/01' });
+  auto.open();
+  ok('حالت خودکار: شمسی فارسی', /[۰-۹]/.test(auto.panelOf('jalali').querySelector('[data-day] .adp-day-num').textContent));
+  ok('حالت خودکار: میلادی لاتین', /^[0-9]+$/.test(auto.panelOf('gregorian').querySelector('[data-day] .adp-day-num').textContent));
+  auto.destroy();
+}
+
+/* ================================================================== */
+group('۱۶) رویداد شخصی با انتخاب روز');
+{
+  const { w, doc } = makeDom('<input id="e1"><input id="e2"><input id="e3">');
+  const ADP = w.AriaDatePicker;
+
+  // حالت اول: handler با (info, picker)
+  let calls = [], received = null;
+  const p = ADP.create('#e1', {
+    calendar: 'jalali',
+    initialDate: '1405/01/01',
+    dayEvents: {
+      days: ['1405/01/05', '1405/01/07'],
+      title: 'روز کاری خاص',
+      handler: function (info, picker) { calls.push(info.text); received = { info, picker }; return 'ret-ok'; }
+    }
+  });
+  ok('رویداد تعریف شد', p.getDayEvents().length === 1 && p.getDayEvents()[0].hasHandler);
+  p.open();
+  const dayBtn = p.panelEl.querySelector('[data-cal="jalali"] [data-day="' + p.toDateObj('1405/01/05').jdn + '"]');
+  ok('کلاس has-event روی روز', dayBtn.className.indexOf('adp-has-event') !== -1, dayBtn.className);
+  ok('نشانگر رویداد ساخته شد', !!dayBtn.querySelector('.adp-event-dot'));
+  ok('عنوان رویداد در tooltip', (dayBtn.getAttribute('title') || '').indexOf('روز کاری خاص') !== -1, dayBtn.getAttribute('title'));
+  click(w, dayBtn);
+  is('تابع با انتخاب روز اجرا شد', calls.length, 1);
+  is('متن تاریخ به تابع رسید', calls[0], '۱۴۰۵/۰۱/۰۵');
+  ok('آرگومان دوم نمونه‌ی دیت‌پیکر است', received.picker === p);
+  ok('اطلاعات کامل تاریخ', received.info.jalali.y === 1405 && received.info.gregorian.y === 2026);
+  // روز دیگر
+  p.open();
+  click(w, p.panelEl.querySelector('[data-cal="jalali"] [data-day="' + p.toDateObj('1405/01/07').jdn + '"]'));
+  is('رویداد روز دوم', calls.length, 2);
+  // روز بی‌رویداد
+  p.open();
+  click(w, p.panelEl.querySelector('[data-cal="jalali"] [data-day="' + p.toDateObj('1405/01/06').jdn + '"]'));
+  is('روز بدون رویداد تابع را اجرا نمی‌کند', calls.length, 2);
+  // رویداد مستقل روز که توسط طرح موضوعی مشخص شده
+  is('نشانگر تماس onDayEvent نداشت (تعریف‌نشده)', p.getDayEvents().length, 1);
+  p.destroy();
+
+  // حالت دوم: ورودی‌های دلخواه کاربر (args)
+  let argLog = null;
+  const q = ADP.create('#e2', {
+    calendar: 'jalali',
+    initialDate: '1405/02/01',
+    dayEvents: {
+      days: ['1405/02/03'],
+      title: 'یادآور',
+      args: ['$text', 42, '$picker', 'ثابت'],
+      handler: function (a, b, c, d) { argLog = { a, b, c, d, self: this }; return true; }
+    }
+  });
+  q.open();
+  click(w, q.panelEl.querySelector('[data-cal="jalali"] [data-day="' + q.toDateObj('1405/02/03').jdn + '"]'));
+  ok('ورودی‌های دلخواه به تابع رسید', argLog && argLog.a === '۱۴۰۵/۰۲/۰۳' && argLog.b === 42 && argLog.c === q && argLog.d === 'ثابت',
+     JSON.stringify({ a: argLog && argLog.a, b: argLog && argLog.b, d: argLog && argLog.d }));
+  ok('this داخل تابع = نمونه‌ی دیت‌پیکر', argLog && argLog.self === q);
+  q.destroy();
+
+  // حالت سوم: رویداد بازه‌ای + once + disabled
+  let rangeCalls = [];
+  const r = ADP.create('#e3', {
+    calendar: 'jalali',
+    range: true,
+    closeOnSelect: false,
+    initialDate: '1405/03/01',
+    dayEvents: [
+      { weekdays: [5], title: 'جمعه آزاد', className: 'my-friday', handler: function (info) { rangeCalls.push('friday'); } },
+      { rangeDays: { min: 3, max: 5 }, title: 'بازه کوتاه', handler: function (info) { rangeCalls.push(info.range.lengthDays); } },
+      { days: ['1405/03/02'], once: true, handler: function () { rangeCalls.push('once'); } },
+      { days: ['1405/03/09'], disabled: true, title: 'تعطیل' }
+    ]
+  });
+  r.open();
+  const days = r.panelEl.querySelectorAll('[data-cal="jalali"] [data-day]');
+  const d2 = r.panelEl.querySelector('[data-cal="jalali"] [data-day="' + r.toDateObj('1405/03/02').jdn + '"]');
+  ok('کلاس دلخواه کاربر روی روز', d2.className.indexOf('my-friday') !== -1 || d2.className.indexOf('adp-has-event') !== -1);
+  const d9 = r.panelEl.querySelector('[data-cal="jalali"] [data-day="' + r.toDateObj('1405/03/09').jdn + '"]');
+  ok('روز غیرفعال با رویداد disabled', d9.hasAttribute('disabled'));
+  click(w, d2);
+  is('رویداد once اجرا شد', rangeCalls.filter((c) => c === 'once').length, 1);
+  click(w, d2);
+  is('رویداد once دوباره اجرا نشد', rangeCalls.filter((c) => c === 'once').length, 1);
+  // بازه‌ی ۳ روزه: 1405/03/04 تا 1405/03/06
+  const den = (x) => r.panelEl.querySelector('[data-cal="jalali"] [data-day="' + r.toDateObj(x).jdn + '"]');
+  if (!den('1405/03/04').hasAttribute('disabled') && !den('1405/03/06').hasAttribute('disabled')) {
+    click(w, den('1405/03/04'));
+    click(w, den('1405/03/06'));
+    ok('رویداد مبتنی بر طول بازه اجرا شد', rangeCalls.indexOf(3) !== -1, JSON.stringify(rangeCalls));
+  }
+  ok('فهرست رویدادها با getDayEvents', r.getDayEvents().length === 4);
+  r.removeDayEvent('dayEvent1');
+  is('حذف رویداد با id', r.getDayEvents().length, 3);
+  r.setDayEvents(null);
+  is('پاک کردن همه‌ی رویدادها', r.getDayEvents().length, 0);
+  r.destroy();
+}
+
+/* ================================================================== */
+group('۱۷) بسته‌شدن یا بازماندن پنل پس از انتخاب');
+{
+  const { w, doc } = makeDom('<input id="c1"><input id="c2"><input id="c3"><input id="c4">');
+  const ADP = w.AriaDatePicker;
+  const pick = (p, x) => click(w, p.panelEl.querySelector('[data-cal="jalali"] [data-day="' + p.toDateObj(x).jdn + '"]'));
+  const todayJ = () => { const t = ADP.utils.todayIn('jalali'); return t.y + '/' + String(t.m).padStart(2, '0') + '/' + String(t.d).padStart(2, '0'); };
+
+  const a = ADP.create('#c1', { calendar: 'jalali', closeOnSelect: true, initialDate: '1405/01/01' });
+  a.open(); pick(a, '1405/01/05');
+  ok('closeOnSelect:true => بسته می‌شود', !a.isOpen());
+  a.destroy();
+
+  const b = ADP.create('#c2', { calendar: 'jalali', closeOnSelect: false, initialDate: '1405/01/01' });
+  b.open(); pick(b, '1405/01/05');
+  ok('closeOnSelect:false => باز می‌ماند', b.isOpen());
+  ok('مقدار همان‌جا ثبت شد', b.getText(), '۱۴۰۵/۰۱/۰۵');
+  pick(b, '1405/01/09');
+  is('انتخاب بعدی جای قبلی را می‌گیرد', b.getText(), '۱۴۰۵/۰۱/۰۹');
+  b.destroy();
+
+  const c = ADP.create('#c3', { calendar: 'jalali', range: true, closeOnSelect: true, closeOnSelectRange: false, initialDate: '1405/01/01' });
+  c.open(); pick(c, '1405/01/05');
+  ok('در حالت رنج با closeOnSelectRange:false باز می‌ماند', c.isOpen());
+  pick(c, '1405/01/10');
+  ok('پس از بازه هم باز می‌ماند', c.isOpen());
+  c.destroy();
+
+  const d = ADP.create('#c4', { calendar: 'jalali', range: true, closeOnSelect: true, closeOnSelectRange: true, initialDate: '1405/01/01' });
+  d.open(); pick(d, '1405/01/05'); pick(d, '1405/01/10');
+  ok('با closeOnSelectRange:true پس از بازه بسته می‌شود', !d.isOpen());
+  d.destroy();
+}
+
+/* ================================================================== */
+group('۱۸) سوییچ تقویم با یک دکمه');
+{
+  const { w, doc } = makeDom('<input id="s1"><input id="s2"><input id="s3">');
+  const ADP = w.AriaDatePicker;
+
+  const p = ADP.create('#s1', { calendar: 'jalali', switchToCalendar: 'gregorian', initialDate: '1405/01/01' });
+  p.open();
+  const bar = p.panelEl.querySelector('.adp-switchbar');
+  ok('نوار سوییچ ساخته شد', !!bar);
+  is('دو دکمه‌ی تقویم', bar.querySelectorAll('[data-switch]').length, 2);
+  is('در ابتدا فقط شمسی فعال', p.getCalendars().join(','), 'jalali');
+  click(w, bar.querySelector('[data-switch="gregorian"]'));
+  is('با کلیک، میلادی هم‌زمان نمایش داده شد', p.getCalendars().join(','), 'jalali,gregorian');
+  ok('پنل میلادی رندر شد', !!p.panelOf('gregorian'));
+  is('تقویم اصلی به میلادی تغییر کرد', p.getPrimaryCalendar(), 'gregorian');
+  click(w, p.panelEl.querySelector('[data-switch="gregorian"]'));
+  is('کلیک دوباره پنل میلادی را پنهان می‌کند', p.getCalendars().join(','), 'jalali');
+  p.destroy();
+
+  const swap = ADP.create('#s2', { calendar: 'jalali', switchMode: 'swap', initialDate: '1405/01/01' });
+  swap.open();
+  click(w, swap.panelEl.querySelector('[data-switch="gregorian"]'));
+  is('حالت swap: فقط میلادی', swap.getCalendars().join(','), 'gregorian');
+  ok('پنل شمسی حذف شد', !swap.panelOf('jalali'));
+  click(w, swap.panelEl.querySelector('[data-switch="jalali"]'));
+  is('بازگشت به شمسی', swap.getCalendars().join(','), 'jalali');
+  swap.setSwitchMode('both');
+  is('تغییر حالت سوییچ', swap.options.switchMode, 'both');
+  swap.destroy();
+
+  const hide = ADP.create('#s3', { calendar: 'jalali', calendarSwitch: false });
+  hide.open();
+  ok('با calendarSwitch:false نوار مخفی است', !hide.panelEl.querySelector('.adp-switchbar'));
+  hide.showGregorian();
+  is('API نمایش هم‌زمان میلادی', hide.getCalendars().join(','), 'jalali,gregorian');
+  is('تقویم اصلی میلادی شد', hide.getPrimaryCalendar(), 'gregorian');
+  hide.showGregorian();
+  is('فراخوانی دوباره‌ی API باعث پنهان شدن نشود', hide.getCalendars().join(','), 'jalali,gregorian');
+  hide.hideGregorian();
+  is('API پنهان کردن میلادی', hide.getCalendars().join(','), 'jalali');
+  hide.destroy();
+}
+
+/* ================================================================== */
+group('۱۹) تعطیلات فقط از فایل نمونه/محلی (بدون دانلود خودکار)');
+{
+  const { w, doc } = makeDom('<input id="h1"><input id="h2">');
+  const ADP = w.AriaDatePicker;
+  w.fetch = function () { manualFetchCount++; return Promise.reject(new Error('offline')); };
+
+  const p = ADP.create('#h1', { calendar: 'jalali', holidays: { jalali: { '1405/01/01': 'نوروز' } } });
+  p.open();
+  p.setViewDate('1405/03/01').setViewDate('1406/01/01');
+  ok('هیچ دانلود خودکاری انجام نشد', manualFetchCount === 0, 'fetched=' + manualFetchCount);
+  ok('گزینه‌ی autoFetch وجود ندارد', p.options.autoFetch === undefined);
+  ok('گزینه‌ی showOnlineStatus وجود ندارد', p.options.showOnlineStatus === undefined);
+  ok('نشانگر آنلاین در پاصفحه نیست', !p.panelEl.querySelector('.adp-status'));
+  ok('تعطیلات فایل نمونه در دسترس است', p.isHoliday('1405/01/01'));
+  // دریافت دستی اختیاری (بررسی غیرهمگام در پایان تست‌ها)
+  p.holiday.fetched = { jalali: {}, gregorian: {} };
+  manualFetchRequested = true;
+  const done = p.fetchHolidays();
+  if (done && done.catch) done.catch(function () { });
+  p.destroy();
+
+  const q = ADP.create('#h2', { calendar: 'jalali', holidayJson: 'holidays-sample.json' });
+  q.open();
+  ok('آدرس فایل ذخیره شده است', q.options.holidayJson === 'holidays-sample.json');
+  q.destroy();
+}
+
+
+/* ================================================================== */
 group('۱۳) قابلیت‌های تکمیلی');
 {
   const { w, doc } = makeDom('<input id="x1"><input id="x2"><div id="x3"></div><input id="x4">');
@@ -413,6 +655,10 @@ group('۱۴) خروجی متدهای عمومی');
 }
 
   /* ---------- خلاصه ---------- */
-  console.log(`\n──────────────\nنتیجه: ${passed} موفق، ${failed} ناموفق`);
-  process.exit(failed ? 1 : 0);
+  setTimeout(function () {
+    ok('fetchHolidays فقط با فراخوانی دستی از اینترنت استفاده می‌کند',
+      manualFetchRequested && manualFetchCount > 0, 'fetched=' + manualFetchCount);
+    console.log(`\n──────────────\nنتیجه: ${passed} موفق، ${failed} ناموفق`);
+    process.exit(failed ? 1 : 0);
+  }, 150);
 }

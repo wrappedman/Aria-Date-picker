@@ -138,7 +138,7 @@ function pack(outFile) {
   }
 
   const zip = createZip(files);
-  const out = outFile || path.join(path.dirname(ROOT), 'aria-datepicker-v1.0.0.zip');
+  const out = outFile || path.join(path.dirname(ROOT), 'aria-datepicker-v1.1.0.zip');
   fs.writeFileSync(out, zip);
   console.log(`\n✔ فایل زیپ ساخته شد: ${out} (${(zip.length / 1024).toFixed(1)} کیلوبایت)`);
   console.log('  محتوای زیپ: ' + files.map((f) => f.name).join('، '));

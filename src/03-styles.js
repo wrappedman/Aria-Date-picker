@@ -115,6 +115,25 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 @media (prefers-reduced-motion: reduce) { .{{P}}popup { animation: none; } }
 .{{P}}inline { display: inline-block; background: var(--{{P}}bg); color: var(--{{P}}fg); border: 1px solid var(--{{P}}border); border-radius: var(--{{P}}radius); box-shadow: var(--{{P}}shadow); padding: 10px; max-width: 100%; }
 
+/* ---------- نوار سوییچ تقویم ---------- */
+.{{P}}switchbar {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 2px 4px 8px; margin-bottom: 6px;
+  border-bottom: 1px dashed var(--{{P}}border);
+}
+.{{P}}switch {
+  font: inherit; font-size: 12px; line-height: 1.6; padding: 3px 12px;
+  border-radius: 999px; border: 1px solid var(--{{P}}border);
+  background: var(--{{P}}bg-alt); color: var(--{{P}}muted); cursor: pointer;
+  transition: all .15s;
+}
+.{{P}}switch:hover { border-color: var(--{{P}}accent); color: var(--{{P}}accent); }
+.{{P}}switch.{{P}}active {
+  background: var(--{{P}}accent); border-color: var(--{{P}}accent);
+  color: var(--{{P}}accent-fg); font-weight: 700;
+}
+.{{P}}switch-hint { font-size: 11px; color: var(--{{P}}muted); margin-inline-start: auto; }
+
 /* ---------- سربرگ ---------- */
 .{{P}}cals { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .{{P}}cal { padding: 2px 4px; }
@@ -167,6 +186,13 @@ input.{{P}}input:disabled { cursor: not-allowed; opacity: .6; }
 .{{P}}day-sub { font-size: 9px; color: var(--{{P}}muted); line-height: 1; margin-top: 2px; }
 .{{P}}selected .{{P}}day-sub { color: inherit; opacity: .85; }
 .{{P}}dot { position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--{{P}}holiday); }
+.{{P}}event-dot {
+  position: absolute; bottom: 4px; inset-inline-start: 5px;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--{{P}}accent);
+}
+.{{P}}selected .{{P}}event-dot { background: var(--{{P}}accent-fg); }
+.{{P}}has-event .{{P}}day-num { font-weight: 700; }
+.{{P}}list-item-event .{{P}}list-day { color: var(--{{P}}accent); }
 .{{P}}selected .{{P}}dot { background: var(--{{P}}accent-fg); }
 
 /* ---------- حالت‌های ماه/سال ---------- */

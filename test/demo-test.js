@@ -71,7 +71,8 @@ setTimeout(() => {
   ok('همه‌ی نمونه‌ها ساخته شدند', ADP.instances.length >= 10, 'تعداد: ' + ADP.instances.length);
 
   const ids = ['demo-basic', 'demo-both', 'demo-greg', 'demo-today', 'demo-default', 'demo-range',
-    'demo-limited', 'demo-noholi', 'demo-json', 'demo-online', 'demo-inline', 'demo-div', 'demo-form-field', 'demo-time'];
+    'demo-limited', 'demo-noholi', 'demo-json', 'demo-online', 'demo-inline', 'demo-div', 'demo-form-field',
+    'demo-time', 'demo-digits', 'demo-events', 'demo-close', 'demo-switch'];
   ids.forEach((id) => {
     const el = w.document.getElementById(id);
     const p = el && ADP.get(el);
@@ -86,6 +87,7 @@ setTimeout(() => {
   // فیلد مخفی فرم
   const hidden = w.document.querySelector('input[name="trip_date"]');
   ok('فیلد مخفی فرم ساخته شد', !!hidden);
+  ok('هیچ گزینه‌ی autoFetch باقی نمانده', ADP.instances.every((p) => p.options.autoFetch === undefined));
 
   // دکمه‌ی نمایش تاریخ امروز
   const todayPicker = ADP.get(w.document.getElementById('demo-today'));
@@ -99,6 +101,39 @@ setTimeout(() => {
   ADP.instances.forEach((p) => p.open());
   ADP.instances.forEach((p) => p.close());
   ok('باز/بسته کردن همه‌ی نمونه‌ها بدون خطا', errors.length === 0, errors.join(' | '));
+
+  // کنترل‌های جدید
+  const digits = ADP.get(w.document.getElementById('demo-digits'));
+  ok('نمونه‌ی ارقام ساخته شد', !!digits);
+  const digitsSel = w.document.getElementById('digits-mode');
+  digitsSel.value = 'fa';
+  digitsSel.dispatchEvent(new w.Event('change', { bubbles: true }));
+  ok('تغییر ارقام به فارسی', /[۰-۹]/.test(w.document.getElementById('demo-digits').value),
+     w.document.getElementById('demo-digits').value);
+  digitsSel.value = 'en';
+  digitsSel.dispatchEvent(new w.Event('change', { bubbles: true }));
+  ok('تغییر ارقام به لاتین', /^[0-9]/.test(w.document.getElementById('demo-digits').value),
+     w.document.getElementById('demo-digits').value);
+
+  const evts = ADP.get(w.document.getElementById('demo-events'));
+  ok('رویدادهای شخصی تعریف شد', evts.getDayEvents().length === 5, 'تعداد: ' + evts.getDayEvents().length);
+  evts.triggerDayEvents('1405/01/05');
+  ok('اجرای دستی رویداد', w.document.getElementById('out-events').innerHTML.indexOf('جلسه') !== -1,
+     w.document.getElementById('out-events').innerHTML);
+
+  const sw = ADP.get(w.document.getElementById('demo-switch'));
+  sw.showGregorian();
+  ok('API نمایش میلادی', sw.getCalendars().join(','), 'jalali,gregorian');
+  const swSel = w.document.getElementById('switch-mode');
+  swSel.value = 'swap';
+  swSel.dispatchEvent(new w.Event('change', { bubbles: true }));
+  ok('تغییر حالت سوییچ', sw.options.switchMode, 'swap');
+
+  const closeSel = w.document.getElementById('close-mode');
+  closeSel.value = 'keep';
+  closeSel.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const cp = ADP.get(w.document.getElementById('demo-close'));
+  ok('بازسازی نمونه‌ی بسته‌شدن', !!cp && cp.options.closeOnSelect === false);
 
   // خروجی JSON نمونه
   const json = jsonPicker.exportHolidays();

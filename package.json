@@ -1,6 +1,6 @@
 {
   "name": "aria-date-picker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "دیت‌پیکر تک‌فایلی شمسی و میلادی با جاوااسکریپت خالص / Single-file Jalali & Gregorian date picker with zero dependencies",
   "main": "aria-datepicker.js",
   "files": [

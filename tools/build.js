@@ -18,7 +18,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'src');
 const DIST = path.join(ROOT, 'dist');
 
-const BANNER = `/*! Aria Date Picker v1.0.0 | تقویم شمسی و میلادی | GPL-3.0 | ${new Date().toISOString().slice(0, 10)} */\n`;
+const BANNER = `/*! Aria Date Picker v1.1.0 | تقویم شمسی و میلادی | GPL-3.0 | ${new Date().toISOString().slice(0, 10)} */\n`;
 
 function build() {
   const files = fs.readdirSync(SRC)

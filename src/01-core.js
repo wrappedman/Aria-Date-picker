@@ -5,7 +5,7 @@
  *  یک دیت‌پیکر کامل و تک‌فایلی برای تقویم شمسی (جلالی) و میلادی (گرگوری)
  *  A single-file, dependency-free Jalali (Persian) & Gregorian date picker.
  *
- *  @version   1.0.0
+ *  @version   1.1.0
  *  @author    Aria
  *  @license   GPL-3.0
  *  @file      aria-datepicker.js   (این فایل به تنهایی و بدون هیچ وابستگی کار می‌کند)
@@ -38,7 +38,7 @@
   : (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
   var STYLE_ID = 'aria-datepicker-styles-v1';
   var DEFAULT_PREFIX = 'adp-';
 

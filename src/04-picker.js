@@ -13,7 +13,7 @@
     gregorianLang: null,           // زبان نام ماه‌های میلادی (پیش‌فرض = lang)
     gregorianDir: null,            // جهت پنل میلادی: 'ltr' | 'rtl' (پیش‌فرض: بر اساس زبان)
     weekStart: null,               // ایندکس شروع هفته بر اساس getDay()؛ پیش‌فرض هر تقویم
-    persianDigits: 'auto',         // 'auto' | true | false
+    persianDigits: 'auto',         // 'auto' | true | false | { jalali: true, gregorian: false }
     dualDigits: false,             // نمایش عدد به هر دو شکل (۱۲ و 12)
 
     /* --- مقدار و نمایش --- */
@@ -39,8 +39,12 @@
     confirmMode: false,            // اعمال مقادیر فقط با دکمه‌ی تأیید
     closeOnSelect: true,           // بستن خودکار پس از انتخاب (در حالت تک‌تاریخی)
     showConfirmButton: null,       // پیش‌فرض: در حالت رنج true
+    closeOnSelectRange: null,      // بستن پنل پس از انتخاب تاریخ دوم (پیش‌فرض: مقدار closeOnSelect)
     showCloseButton: false,
     monthsPerPanel: 1,             // تعداد ماه نمایش‌داده‌شده در هر پنل (1 یا 2)
+    calendarSwitch: null,          // نمایش دکمه‌ی سوییچ تقویم: null (خودکار) | true | false
+    switchToCalendar: null,        // تقویم دیگری که با دکمه در دسترس قرار می‌گیرد (مثلاً 'gregorian')
+    switchMode: 'both',            // 'both' = نمایش هم‌زمان در کنار هم، 'swap' = تعویض کامل تقویم
     showOutsideDays: true,
     timePicker: false,
     timeStep: 5,
@@ -62,20 +66,19 @@
     disabled: false,               // غیرفعال کردن کل دیت‌پیکر
     disabledDates: null,           // ['1405/01/13', ...]
     blackout: null,                // تابع (date) => true|false
+    dayEvents: null,               // رویدادهای شخصی روی روزهای مشخص (تابع + آرگومان‌ها)
 
     /* --- تعطیلات --- */
     holidays: null,                // آبجکت JSON تعطیلات
     holidayJson: null,             // آدرس فایل JSON تعطیلات
     weekends: null,                // {jalali:[5], gregorian:[0,6]}
-    autoFetch: 'today',            // 'off' | 'today' | 'visible'
-    countryCode: 'IR',
+    countryCode: 'IR',             // فقط برای فراخوانی دستی fetchHolidays()
     holidayCache: true,
     holidayCacheKey: null,
     holidayTtl: 7 * 24 * 60 * 60 * 1000,
     holidayProviders: null,        // سرویس‌های سفارشی دریافت تعطیلات
     showHolidayList: true,         // فهرست مناسبت‌های ماه
     holidayListLimit: 6,
-    showOnlineStatus: true,
     showExportButton: false,       // دکمه‌ی «JSON» برای ذخیره‌ی تعطیلات
     holidayJsonName: 'holidays.json',
 
@@ -101,6 +104,8 @@
 
     /* --- رویدادها --- */
     onChange: null,
+    onDayEvent: null,              // فراخوانی سراسری پس از هر رویداد شخصی روز
+    onCalendarChange: null,        // تغییر تقویم با دکمه‌ی سوییچ
     onOpen: null,
     onClose: null,
     onSelect: null,
@@ -127,7 +132,20 @@
     if (!o.weekends) o.weekends = { jalali: [5], gregorian: [0, 6] };
     if (o.size !== 'sm' && o.size !== 'lg') o.size = 'md';
     if (o.theme !== 'dark') o.theme = 'light';
-    if (o.persianDigits !== true && o.persianDigits !== false) o.persianDigits = 'auto';
+    // ارقام فارسی/لاتین: true | false | 'auto' | { jalali: bool, gregorian: bool }
+    var pd = o.persianDigits;
+    if (pd === true || pd === false || isPlainObj(pd)) {
+      /* مقدار معتبر */
+    } else if (pd === 'fa' || pd === 'farsi' || pd === 'persian' || pd === 'auto') {
+      o.persianDigits = 'auto';
+    } else if (pd === 'en' || pd === 'latin' || pd === 'ltr' || pd === 'english') {
+      o.persianDigits = false;
+    } else {
+      o.persianDigits = 'auto';
+    }
+    if (o.closeOnSelectRange == null) o.closeOnSelectRange = o.closeOnSelect !== false;
+    if (o.calendarSwitch === null || o.calendarSwitch === undefined) o.calendarSwitch = null;
+    if (o.switchMode !== 'swap') o.switchMode = 'both';
     if (!o.prefix) o.prefix = DEFAULT_PREFIX;
     if (o.format && isStr(o.format)) o.format = { '*': o.format };
 
@@ -195,6 +213,14 @@
     injectStyles(this.prefix);
 
     this.calendars = resolveCalendars(this.options.calendar);
+    // فهرست تقویم‌های در دسترس (برای دکمه‌ی سوییچ تقویم)
+    this.availableCalendars = (function (list, off, swap) {
+      var out = [];
+      ['jalali', 'gregorian'].forEach(function (c) {   // ترتیب ثابت: شمسی سپس میلادی
+        if (list.indexOf(c) !== -1 || c === off || swap) out.push(c);
+      });
+      return out;
+    }(this.calendars, this.options.switchToCalendar, this.options.switchMode === 'swap'));
     this.primary = CALENDARS[this.options.primaryCalendar] && this.calendars.indexOf(this.options.primaryCalendar) !== -1
       ? this.options.primaryCalendar : this.calendars[0];
     this.calLang = this.options.lang === 'en' ? 'en' : 'fa';
@@ -220,7 +246,8 @@
       active: this.primary,
       focusJdn: null,
       loading: 0,
-      time: null
+      time: null,
+      lastDayEvent: null
     };
     this.calendars.forEach(function (c) { this.state.viewMode[c] = this.options.initialView; }, this);
 
@@ -231,6 +258,7 @@
     this.hiddenEl = null;
     this._uidOpenToken = 0;
 
+    this._dayEvents = this._normalizeDayEvents(this.options.dayEvents);
     this._initHolidays();
     this._buildDom();
     this._applyInitialState();
@@ -274,10 +302,17 @@
       return this.panelEl.querySelector('[' + 'data-cal="' + cal + '"]');
     },
 
+    /** آیا در این تقویم ارقام فارسی نمایش داده شود؟ */
     usePersianDigits: function (cal) {
-      if (this.options.persianDigits === true) return true;
-      if (this.options.persianDigits === false) return false;
-      return cal === 'jalali';
+      var pd = this.options.persianDigits;
+      if (isPlainObj(pd)) {
+        if (pd[cal] !== undefined && pd[cal] !== null) return !!pd[cal];
+        if (pd.default !== undefined) return !!pd.default;
+        return cal === 'jalali';
+      }
+      if (pd === true) return true;
+      if (pd === false) return false;
+      return cal === 'jalali';   // 'auto'
     },
 
     num: function (n, cal) {
@@ -396,13 +431,16 @@
       if (this.options.holidays) this.holiday.normalize(this.options.holidays, { source: 'options' });
     },
 
+    /**
+     * بارگذاری اولیه‌ی تعطیلات.
+     *  توجه: هیچ دانلود خودکاری از اینترنت انجام نمی‌شود؛ تعطیلات فقط از
+     *  فایل JSON نمونه/محلی (holidayJson) یا آبجکت holidays خوانده می‌شود.
+     *  برای دریافت دستی و اختیاری از اینترنت از dp.fetchHolidays() استفاده کنید.
+     */
     _loadInitialHolidays: function () {
       var self = this;
       if (this.options.holidayJson) {
         this.holiday.loadFromUrl(this.options.holidayJson).then(function () { self.render(); });
-      }
-      if (this.options.autoFetch && this.options.autoFetch !== 'off') {
-        this._ensureHolidays(this._yearsForView());
       }
     },
 
@@ -423,10 +461,9 @@
       return out;
     },
 
-    /** درخواست دریافت تعطیلات (اگر لازم باشد) */
+    /** دریافت تعطیلات (فقط با فراخوانی دستی) */
     _ensureHolidays: function (years, force) {
       var self = this;
-      if (this.options.autoFetch === 'off' && !force) return Promise.resolve(null);
       this.state.loading++;
       this._updateStatus();
       return this.holiday.fetchHolidays(years, force)['catch'](function () { return null; })
@@ -712,11 +749,18 @@
       }
 
       this._emitSelect(dobj);
+
+      // اجرای رویدادهای شخصی متصل به این روز (در حالت تأییدی، هنگام تأیید اجرا می‌شوند)
+      if (!o.confirmMode) this._fireDayEvents(dobj, { committed: true });
+
       this.render();
 
       if (complete && !o.confirmMode) {
         this._commit(true);
-        if (o.closeOnSelect && (!this._isRange() || o.rangeCloseOnSelect !== false)) this.close();
+        var shouldClose = this._isRange()
+          ? (o.closeOnSelectRange !== false)
+          : (o.closeOnSelect !== false);
+        if (shouldClose) this.close();
       }
       return this;
     },
@@ -726,6 +770,7 @@
       if (this._isRange() && this.state.from && !this.state.to) this.state.to = this.state.from;
       if (this._isRange() && !this.state.from) return this;
       this._commit(true);
+      if (this.state.from) this._fireDayEvents(this.state.from, { committed: true });
       this.close();
       return this;
     },
@@ -782,13 +827,7 @@
       this.state.view[cal] = { y: ny, m: nm };
       if (isFn(this.options.onMonthChange)) this.options.onMonthChange({ calendar: cal, y: ny, m: nm }, this);
       this.render();
-      this._maybeFetchForView();
       return this;
-    },
-
-    _maybeFetchForView: function () {
-      if (this.options.autoFetch !== 'visible') return;
-      this._ensureHolidays(this._yearsForView());
     },
 
     /* =====================================================================
@@ -865,6 +904,12 @@
           var b = this._limitJdn(isArr(r) ? r[1] : r.to);
           if (a != null && b != null && jdn >= Math.min(a, b) && jdn <= Math.max(a, b)) return true;
         }
+      }
+
+      // رویدادهای شخصی که با نوع disabled مشخص شده‌اند
+      if (this._dayEvents && this._dayEvents.length) {
+        var evs = this._eventsFor(dobj);
+        for (var ei = 0; ei < evs.length; ei++) if (evs[ei].disabled) return true;
       }
 
       // تابع دلخواه کاربر
